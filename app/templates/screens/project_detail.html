@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">{{ project.name }}</h1>
+<p class="page-subtitle">{% if project.description %}{{ project.description }}{% else %}Project recordings and transcription progress{% endif %}</p>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid stats-grid-compact">
+  <div class="stat-card">
+    <span class="stat-value">{{ project.recording_count }}</span>
+    <span class="stat-label">Recordings</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ project.segment_count }}</span>
+    <span class="stat-label">Segments</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ fmt_duration(project.total_duration_ms) }}</span>
+    <span class="stat-label">Audio</span>
+  </div>
+  <div class="stat-card highlight">
+    <span class="stat-value">{{ project.transcript_pct }}%</span>
+    <span class="stat-label">Transcribed</span>
+  </div>
+</div>
+
+<div class="card-header-row">
+  <span></span>
+  <div class="header-actions">
+    <a href="/projects/{{ project.id }}/settings" class="btn btn-ghost btn-sm">Settings</a>
+    <a href="/projects/{{ project.id }}/upload" class="btn btn-primary btn-sm">＋ Upload recording</a>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header-row">
+    <h2>Recordings</h2>
+  </div>
+
+  {% if project.recordings %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Duration</th>
+        <th>Chunks</th>
+        <th>Transcribed</th>
+        <th>Coverage</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in project.recordings %}
+      <tr>
+        <td>
+          <a href="{{ recording_url(project.id, r.id) }}" class="table-link">{{ r.title }}</a>
+        </td>
+        <td>{{ fmt_duration(r.duration_ms) }}</td>
+        <td>{{ r.segment_count }}</td>
+        <td>
+          <div class="mini-progress">
+            <div class="progress-track"><div class="progress-fill transcript" style="width:{{ r.transcript_pct }}%"></div></div>
+            <span>{{ r.transcript_pct }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="mini-progress">
+            <div class="progress-track"><div class="progress-fill coverage" style="width:{{ r.coverage_pct }}%"></div></div>
+            <span>{{ r.coverage_pct }}%</span>
+          </div>
+        </td>
+        <td class="actions-cell">
+          <a href="{{ recording_url(project.id, r.id) }}" class="btn btn-primary btn-sm">Transcribe</a>
+          <a href="{{ recording_url(project.id, r.id, 'analysis') }}" class="btn btn-ghost btn-sm">Analysis</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <p>No recordings in this project yet.</p>
+    <a href="/projects/{{ project.id }}/upload" class="btn btn-primary">Upload your first audio</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% if recording and recording.project_id %}
+<nav class="recording-tabs" aria-label="Recording views">
+  <a href="{{ recording_url(recording.project_id, recording.id) }}"
+     class="recording-tab{% if recording_tab == 'editor' %} active{% endif %}">Transcribe</a>
+  <a href="{{ recording_url(recording.project_id, recording.id, 'analysis') }}"
+     class="recording-tab{% if recording_tab == 'analysis' %} active{% endif %}">Analysis</a>
+  <a href="{{ recording_url(recording.project_id, recording.id, 'evaluation') }}"
+     class="recording-tab{% if recording_tab == 'evaluation' %} active{% endif %}">Evaluation</a>
+</nav>
+{% endif %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Upload — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">Upload recording</h1>
+<p class="page-subtitle">Add a new classroom audio file to transcribe</p>
+{% endblock %}
+
+{% block content %}
+<div class="hint-card">
+  <strong>Supported formats</strong>
+  <p>MP3, WAV, M4A, OGG, FLAC. After upload you'll go straight to the waveform editor.</p>
+</div>
+
+<section class="card upload-card">
+  <form id="upload-form" class="upload-form">
+    <label class="field">
+      <span>Project</span>
+      <select name="project_id" required>
+        {% for p in projects %}
+        <option value="{{ p.id }}">{{ p.name }} ({{ p.recording_count }} recordings)</option>
+        {% endfor %}
+      </select>
+      <span class="field-hint">Recordings are organized under projects in the sidebar tree</span>
+    </label>
+    <label class="field">
+      <span>Title</span>
+      <input type="text" name="title" placeholder="e.g. Meet Mr. Hester" required>
+      <span class="field-hint">A short name for this audio file</span>
+    </label>
+    <label class="field">
+      <span>Audio file</span>
+      <input type="file" name="file" accept=".mp3,.wav,.m4a,.ogg,.flac" required>
+    </label>
+    <button type="submit" class="btn btn-primary">Upload &amp; transcribe</button>
+  </form>
+  <p id="upload-status" class="status-msg" hidden></p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const status = document.getElementById('upload-status');
+  const btn = form.querySelector('button');
+  btn.disabled = true;
+  status.hidden = false;
+  status.textContent = 'Uploading…';
+  status.className = 'status-msg';
+  try {
+    const res = await fetch('/api/recordings', { method: 'POST', body: new FormData(form) });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
+    const data = await res.json();
+    window.location.href = `/recordings/${data.id}`;
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-msg error';
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

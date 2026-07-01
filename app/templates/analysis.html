@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ recording.title }} — Analysis{% endblock %}
+
+{% block page_header %}
+{% include "partials/recording_header.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ analysis.segment_count }}</span>
+    <span class="stat-label">Segments</span>
+  </div>
+  <div class="stat-card highlight">
+    <span class="stat-value">{{ analysis.transcript_pct }}%</span>
+    <span class="stat-label">Transcribed</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ analysis.coverage_pct }}%</span>
+    <span class="stat-label">Audio covered</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ analysis.total_words }}</span>
+    <span class="stat-label">Words</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ fmt_duration(analysis.duration_ms) }}</span>
+    <span class="stat-label">Total length</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ (analysis.avg_segment_ms / 1000) | round(1) }}s</span>
+    <span class="stat-label">Avg segment</span>
+  </div>
+</div>
+
+<section class="card">
+  <h2>Progress breakdown</h2>
+  <div class="analysis-bars">
+    <div class="analysis-bar-row">
+      <span class="analysis-bar-label">Segments with transcript</span>
+      <div class="progress-track wide"><div class="progress-fill transcript" style="width:{{ analysis.transcript_pct }}%"></div></div>
+      <span class="analysis-bar-val">{{ analysis.transcribed_segments }} / {{ analysis.segment_count }}</span>
+    </div>
+    <div class="analysis-bar-row">
+      <span class="analysis-bar-label">Segments with speaker</span>
+      <div class="progress-track wide"><div class="progress-fill speaker" style="width:{{ analysis.speaker_label_pct }}%"></div></div>
+      <span class="analysis-bar-val">{{ analysis.speaker_labeled_segments }} / {{ analysis.segment_count }}</span>
+    </div>
+    <div class="analysis-bar-row">
+      <span class="analysis-bar-label">Audio covered by segments</span>
+      <div class="progress-track wide"><div class="progress-fill coverage" style="width:{{ analysis.coverage_pct }}%"></div></div>
+      <span class="analysis-bar-val">{{ fmt_duration(analysis.segmented_duration_ms) }}</span>
+    </div>
+  </div>
+  {% if analysis.empty_segments > 0 %}
+  <p class="field-hint" style="margin-top:12px">{{ analysis.empty_segments }} segment(s) still need a transcript.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-header-row">
+    <h2>Speakers</h2>
+    <a href="{{ recording_url(recording.project_id, recording.id) }}" class="btn btn-primary btn-sm">Continue transcribing</a>
+  </div>
+  {% if analysis.speakers %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Speaker</th>
+        <th>Segments</th>
+        <th>Speaking time</th>
+        <th>Words</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sp in analysis.speakers %}
+      <tr>
+        <td>{{ sp.name }}</td>
+        <td>{{ sp.segments }}</td>
+        <td>{{ fmt_duration(sp.duration_ms) }}</td>
+        <td>{{ sp.words }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No speaker data yet. Label speakers while transcribing.</p>
+  {% endif %}
+</section>
+
+{% if recording.notes %}
+<section class="card">
+  <h2>Session notes</h2>
+  <p>{{ recording.notes }}</p>
+</section>
+{% endif %}
+{% endblock %}

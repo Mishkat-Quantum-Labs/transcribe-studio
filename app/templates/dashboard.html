@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">Dashboard</h1>
+<p class="page-subtitle">Overview of your classroom transcriptions</p>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ stats.recording_count }}</span>
+    <span class="stat-label">Recordings</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ stats.segment_count }}</span>
+    <span class="stat-label">Segments</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ fmt_duration(stats.total_duration_ms) }}</span>
+    <span class="stat-label">Audio total</span>
+  </div>
+  <div class="stat-card highlight">
+    <span class="stat-value">{{ stats.transcript_pct }}%</span>
+    <span class="stat-label">Transcribed</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ stats.total_words }}</span>
+    <span class="stat-label">Words typed</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ stats.unique_speakers }}</span>
+    <span class="stat-label">Speakers</span>
+  </div>
+</div>
+
+<div class="hint-card">
+  <strong>Quick start</strong>
+  <p><a href="/upload">Upload audio</a> → open a recording → drag segments on the wave → export as TXT or JSON when done.</p>
+</div>
+
+<section class="card">
+  <div class="card-header-row">
+    <h2>Recordings progress</h2>
+    <a href="/recordings" class="btn btn-ghost btn-sm">View all</a>
+  </div>
+  {% if stats.recordings %}
+  <div class="progress-table">
+    {% for r in stats.recordings %}
+    <div class="progress-row">
+      <div class="progress-info">
+        <a href="/recordings/{{ r.id }}" class="progress-title">{{ r.title }}</a>
+        <span class="progress-meta">{{ r.segment_count }} segments · {{ fmt_duration(r.duration_ms) }}</span>
+      </div>
+      <div class="progress-bars">
+        <div class="progress-bar-wrap" title="Transcript filled">
+          <div class="progress-bar-label">Transcript {{ r.transcript_pct }}%</div>
+          <div class="progress-track"><div class="progress-fill transcript" style="width:{{ r.transcript_pct }}%"></div></div>
+        </div>
+        <div class="progress-bar-wrap" title="Audio covered by segments">
+          <div class="progress-bar-label">Coverage {{ r.coverage_pct }}%</div>
+          <div class="progress-track"><div class="progress-fill coverage" style="width:{{ r.coverage_pct }}%"></div></div>
+        </div>
+      </div>
+      <div class="progress-actions">
+        <a href="/recordings/{{ r.id }}" class="btn btn-primary btn-sm">Transcribe</a>
+        <a href="/recordings/{{ r.id }}/analysis" class="btn btn-ghost btn-sm">Analysis</a>
+        <a href="/recordings/{{ r.id }}/evaluation" class="btn btn-ghost btn-sm">Evaluation</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">No recordings yet. <a href="/upload">Upload your first audio</a>.</p>
+  {% endif %}
+</section>
+{% endblock %}

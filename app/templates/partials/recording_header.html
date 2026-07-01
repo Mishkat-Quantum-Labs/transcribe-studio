@@ -1,0 +1,32 @@
+{% if recording %}
+<div class="workspace-card">
+  <div class="workspace-top">
+    <div class="workspace-meta">
+      {% if recording.project_name and recording.project_id %}
+      <a href="/projects/{{ recording.project_id }}" class="workspace-project">{{ recording.project_name }}</a>
+      {% endif %}
+      <h1 class="workspace-title">{{ recording.title }}</h1>
+      <p class="workspace-meta-line">{{ fmt_duration(recording.duration_ms) }}</p>
+    </div>
+
+    {% if recording_tab == 'editor' %}
+    <div class="workspace-actions">
+      <div class="export-group">
+        <select id="export-format" title="Export format">
+          <option value="txt">Plain text (.txt)</option>
+          <option value="md">Markdown (.md)</option>
+          <option value="json">JSON (.json)</option>
+          <option value="csv">CSV (.csv)</option>
+          <option value="srt">Subtitles (.srt)</option>
+          <option value="vtt">WebVTT (.vtt)</option>
+        </select>
+        <button id="btn-export" class="btn btn-ghost btn-sm">Export</button>
+      </div>
+      <button id="btn-delete-rec" class="btn btn-danger btn-sm">Delete</button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "partials/recording_tabs.html" %}
+</div>
+{% endif %}

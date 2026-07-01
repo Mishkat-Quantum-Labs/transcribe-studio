@@ -1,0 +1,45 @@
+# Transcribe Studio - Evaluation Configuration
+# https://github.com/Mishkat-Quantum-Labs/transcribe-studio
+
+[evaluation]
+version = "1.0"
+default_language = "en"
+
+# Metrics to compute
+# Set enabled = false to skip a metric
+# weight is used for weighted averaging in overall score
+
+[evaluation.metrics]
+
+[evaluation.metrics.wer]
+enabled = true
+weight = 1.0
+case_sensitive = false
+description = "Word Error Rate - standard ASR metric"
+
+[evaluation.metrics.cer]
+enabled = false
+weight = 0.0
+description = "Character Error Rate - useful for character-level languages"
+
+[evaluation.metrics.semantic_score]
+enabled = true
+weight = 0.5
+description = "Semantic equivalence score - partial credit for meaning"
+
+# Text normalization settings
+# These apply before metric calculation
+
+[evaluation.normalization]
+lowercase = true
+trim_whitespace = true
+remove_punctuation = false
+normalize_quotes = true
+remove_special_chars = false
+
+# UI Settings
+
+[evaluation.ui]
+show_detailed_breakdown = true
+highlight_errors = true
+color_scheme = "auto"

@@ -1,0 +1,1 @@
+"""Web layer: templates, page context, HTTP routes."""

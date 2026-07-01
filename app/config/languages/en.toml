@@ -1,0 +1,242 @@
+# English Language Configuration
+# Semantic equivalence rules for English
+
+[language]
+code = "en"
+name = "English"
+normalizer_class = "en"
+
+# ============================================================
+# SEMANTIC MATCHING RULES
+# ============================================================
+# These rules define phrases that are semantically equivalent
+# even when they differ in exact wording.
+#
+# Each rule has:
+# - variants: list of alternative phrasings
+# - canonical: the "standard" form to compare against
+# - weight: 0.0-1.0, confidence of equivalence
+#
+# Matching works bidirectionally:
+# "gonna" matches "going to" and vice versa
+# ============================================================
+
+[[semantic_matchers.group]]
+name = "contractions_informal"
+description = "Contractions and informal speech → formal forms"
+enabled = true
+
+[[semantic_matchers.group.rule]]
+variants = ["gonna", "gon na", "gunna", "gonna"]
+canonical = "going to"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["wanna", "wanner"]
+canonical = "want to"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["gotta", "got a"]
+canonical = "got to"
+weight = 0.9
+
+[[semantic_matchers.group.rule]]
+variants = ["kinda", "kind of"]
+canonical = "kind of"
+weight = 0.9
+
+[[semantic_matchers.group.rule]]
+variants = ["sorta", "sort of"]
+canonical = "sort of"
+weight = 0.9
+
+[[semantic_matchers.group.rule]]
+variants = ["outta", "out of"]
+canonical = "out of"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["lemme", "let me"]
+canonical = "let me"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["gimme", "give me"]
+canonical = "give me"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["dunno", "dont know", "do not know", "don't know"]
+canonical = "do not know"
+weight = 0.9
+
+[[semantic_matchers.group.rule]]
+variants = ["coulda", "could have", "could've"]
+canonical = "could have"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["woulda", "would have", "would've"]
+canonical = "would have"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["shoulda", "should have", "should've"]
+canonical = "should have"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["lotsa", "lots of"]
+canonical = "lots of"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["cause", "cos", "cuz"]
+canonical = "because"
+weight = 0.85
+
+[[semantic_matchers.group.rule]]
+variants = ["nvm", "nvr", "nevermind", "never mind"]
+canonical = "never mind"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["thru", "through"]
+canonical = "through"
+weight = 0.98
+
+[[semantic_matchers.group.rule]]
+variants = ["u", "you"]
+canonical = "you"
+weight = 0.8
+
+[[semantic_matchers.group.rule]]
+variants = ["ur", "you're", "your"]
+canonical = "your"
+weight = 0.7
+
+[[semantic_matchers.group.rule]]
+variants = ["ok", "okay", "ok"]
+canonical = "okay"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["yeah", "yes", "yea", "yah"]
+canonical = "yes"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["nope", "no", "nah"]
+canonical = "no"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["alright", "all right", "allright"]
+canonical = "all right"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["gonna", "goin", "goin to", "going"]
+canonical = "going"
+weight = 0.8
+
+[[semantic_matchers.group]]
+name = "repeated_sounds"
+description = "Stuttered/repeated sounds - common in spontaneous speech"
+enabled = true
+
+[[semantic_matchers.group.rule]]
+variants = ["um", "uh", "er", "erm"]
+canonical = ""
+weight = 0.5
+
+[[semantic_matchers.group]]
+name = "common_confusions"
+description = "Common ASR/LLM transcription confusions"
+enabled = true
+
+[[semantic_matchers.group.rule]]
+variants = ["i am", "i'm", "im"]
+canonical = "i am"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["you know", "yknow", "y'know"]
+canonical = "you know"
+weight = 0.9
+
+[[semantic_matchers.group.rule]]
+variants = ["like", "like like"]
+canonical = "like"
+weight = 0.7
+
+[[semantic_matchers.group]]
+name = "numbers"
+description = "Number word ↔ digit equivalence"
+enabled = true
+
+[[semantic_matchers.group.rule]]
+variants = ["for", "four"]
+canonical = "four"
+weight = 0.9
+
+[[semantic_matchers.group.rule]]
+variants = ["to", "two", "too"]
+canonical = "two"
+weight = 0.8
+
+[[semantic_matchers.group]]
+name = "contractions"
+description = "Standard English contractions"
+enabled = true
+
+[[semantic_matchers.group.rule]]
+variants = ["don't", "do not"]
+canonical = "do not"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["can't", "cannot"]
+canonical = "cannot"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["won't", "will not"]
+canonical = "will not"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["i've", "i have"]
+canonical = "i have"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["i'll", "i will"]
+canonical = "i will"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["it's", "it is", "its"]
+canonical = "it is"
+weight = 0.95
+
+[[semantic_matchers.group.rule]]
+variants = ["that's", "that is"]
+canonical = "that is"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["there's", "there is"]
+canonical = "there is"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["here's", "here is"]
+canonical = "here is"
+weight = 1.0
+
+[[semantic_matchers.group.rule]]
+variants = ["what's", "what is"]
+canonical = "what is"
+weight = 1.0

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}{{ recording.title }} — Transcribe Studio{% endblock %}
+
+{% block head %}
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/zoom.min.js"></script>
+{% endblock %}
+
+{% block page_header %}
+{% include "partials/recording_header.html" %}
+{% endblock %}
+
+{% block content %}
+
+<section class="guide-box">
+  <div class="guide-title">Quick guide</div>
+  <ol class="steps">
+    <li><strong>Divide the audio</strong> into chunks below (by length or count) — we cap splits so the list stays manageable</li>
+    <li>Click a chunk on the wave, then describe the speaker and type what was said verbatim</li>
+    <li>If two people talk at once, use <strong>Add speaker at same time</strong> — each gets their own row, same timestamps</li>
+    <li>Times are in <strong>milliseconds</strong> — use hotkeys below to move and listen</li>
+  </ol>
+</section>
+
+<section class="card hotkeys-card">
+  <details open>
+    <summary class="hotkeys-summary">Keyboard shortcuts <span class="hotkeys-hint">(press <kbd>?</kbd> to toggle)</span></summary>
+    <div class="hotkeys-grid">
+      <div class="hotkeys-group">
+        <h4>Playback</h4>
+        <div class="hotkey-row"><kbd>Space</kbd><span>Play / pause selected chunk</span></div>
+        <div class="hotkey-row"><kbd>Shift</kbd><span class="hotkey-plus">+</span><kbd>Space</kbd><span>Play / pause full audio</span></div>
+        <div class="hotkey-row"><kbd>C</kbd><span>Play selected chunk from start</span></div>
+        <div class="hotkey-row"><kbd>←</kbd><span>Skip back 2 seconds</span></div>
+        <div class="hotkey-row"><kbd>→</kbd><span>Skip forward 2 seconds</span></div>
+        <div class="hotkey-row"><kbd>Shift</kbd><span class="hotkey-plus">+</span><kbd>←</kbd> <kbd>→</kbd><span>Skip 5 seconds</span></div>
+      </div>
+      <div class="hotkeys-group">
+        <h4>Segments</h4>
+        <div class="hotkey-row"><kbd>[</kbd> <kbd>J</kbd><span>Previous segment</span></div>
+        <div class="hotkey-row"><kbd>]</kbd> <kbd>K</kbd><span>Next segment</span></div>
+        <div class="hotkey-row"><kbd>Ctrl</kbd><span class="hotkey-plus">+</span><kbd>S</kbd><span>Save current segment</span></div>
+        <div class="hotkey-row"><kbd>Delete</kbd><span>Delete current segment</span></div>
+        <div class="hotkey-row"><kbd>Esc</kbd><span>Close editor panel</span></div>
+      </div>
+      <div class="hotkeys-group">
+        <h4>Waveform</h4>
+        <div class="hotkey-row"><kbd>+</kbd> <kbd>=</kbd><span>Zoom in</span></div>
+        <div class="hotkey-row"><kbd>-</kbd><span>Zoom out</span></div>
+        <div class="hotkey-row"><kbd>0</kbd><span>Fit wave to view</span></div>
+      </div>
+      <div class="hotkeys-group">
+        <h4>Chunk speed</h4>
+        <div class="hotkey-row"><kbd>&lt;</kbd> <kbd>,</kbd><span>Slower</span></div>
+        <div class="hotkey-row"><kbd>&gt;</kbd> <kbd>.</kbd><span>Faster</span></div>
+      </div>
+    </div>
+    <p class="hotkeys-note">Shortcuts work when you're not typing in a text field. <kbd>Ctrl</kbd>+<kbd>S</kbd> saves even while typing.</p>
+  </details>
+</section>
+
+<section class="card wave-card">
+  <div id="wave-status" class="wave-status" hidden></div>
+  <div id="waveform"></div>
+
+  <div class="transport transport-nav">
+    <button id="btn-prev-seg" class="btn btn-ghost btn-sm" title="Previous segment  [  or  J">◀ Prev</button>
+    <span id="seg-nav-label" class="seg-nav-label">No segment selected</span>
+    <button id="btn-next-seg" class="btn btn-ghost btn-sm" title="Next segment  ]  or  K">Next ▶</button>
+  </div>
+
+  <div class="transport transport-main">
+    <button id="btn-skip-back" class="btn btn-ghost btn-sm" title="Back 5s  (Shift+←)">−5s</button>
+    <button id="btn-play-chunk" class="btn btn-primary btn-sm" title="Play chunk  (C or Space)">▶ Chunk</button>
+    <button id="btn-play" class="btn btn-ghost btn-sm" title="Play all  (Shift+Space)">Play all</button>
+    <button id="btn-skip-fwd" class="btn btn-ghost btn-sm" title="Forward 5s  (Shift+→)">+5s</button>
+    <span id="time-display" class="time-display">0:00.000 / 0:00.000</span>
+    <div class="speed-stepper" title="Chunk playback speed">
+      <span class="speed-stepper-label">Chunk speed</span>
+      <button type="button" id="btn-speed-down" class="btn btn-ghost btn-sm" title="Slower  &lt;  or  ,">−</button>
+      <span id="speed-label" class="speed-label">1×</span>
+      <button type="button" id="btn-speed-up" class="btn btn-ghost btn-sm" title="Faster  &gt;  or  .">+</button>
+      <select id="playback-speed" class="speed-select" aria-label="Playback speed">
+        <option value="1" selected>1×</option>
+      </select>
+    </div>
+    <label class="chunk-mode">
+      <input type="checkbox" id="chunk-only" checked>
+      <span>Space plays chunk only</span>
+    </label>
+    <span class="transport-spacer"></span>
+    <button id="btn-zoom-out" class="btn btn-ghost btn-sm" title="Zoom out  (-)">−</button>
+    <span id="zoom-label" class="zoom-label">50px/s</span>
+    <button id="btn-zoom-in" class="btn btn-ghost btn-sm" title="Zoom in  (+)">+</button>
+    <button id="btn-zoom-fit" class="btn btn-ghost btn-sm" title="Fit wave  (0)">Fit</button>
+  </div>
+  <p class="wave-hint">Scroll the wave horizontally · click a chunk to edit</p>
+</section>
+
+<section class="card helper-box divide-box">
+  <h3>Divide into chunks</h3>
+  <p class="hint">Split the recording into equal pieces (max 150). You still fill in speaker &amp; transcript for each chunk.</p>
+
+  <div class="divide-modes">
+    <label class="divide-mode">
+      <input type="radio" name="divide-mode" value="duration" checked>
+      <span>By chunk length</span>
+    </label>
+    <label class="divide-mode">
+      <input type="radio" name="divide-mode" value="count">
+      <span>By number of chunks</span>
+    </label>
+  </div>
+
+  <div id="divide-duration-row" class="helper-row divide-row">
+    <select id="divide-unit">
+      <option value="seconds">Seconds per chunk</option>
+      <option value="milliseconds">Milliseconds per chunk</option>
+    </select>
+    <input type="number" id="divide-value" placeholder="e.g. 30" min="1" step="any">
+  </div>
+
+  <div id="divide-count-row" class="helper-row divide-row" hidden>
+    <label class="field-inline divide-count-field">
+      <span>Number of chunks</span>
+      <input type="number" id="divide-count" placeholder="e.g. 12" min="1" max="150" step="1">
+    </label>
+  </div>
+
+  <div class="divide-options">
+    <label class="divide-check">
+      <input type="checkbox" id="divide-replace" checked>
+      <span>Replace existing chunks</span>
+    </label>
+    <label class="divide-check">
+      <input type="checkbox" id="manual-drag">
+      <span>Allow manual drag on wave (advanced)</span>
+    </label>
+  </div>
+
+  <div class="helper-row">
+    <button id="btn-divide" class="btn btn-primary btn-sm">Apply division</button>
+    <span id="divide-preview" class="divide-preview"></span>
+  </div>
+</section>
+
+<section id="editor-panel" class="card editor-panel" hidden>
+  <div class="panel-header">
+    <h3>Scoped to this segment</h3>
+    <button id="btn-close-panel" class="btn-icon" title="Close">×</button>
+  </div>
+
+  <div class="time-row">
+    <label class="field field-inline">
+      <span>Start (ms)</span>
+      <input type="number" id="seg-start" min="0" step="1">
+    </label>
+    <label class="field field-inline">
+      <span>End (ms)</span>
+      <input type="number" id="seg-end" min="1" step="1">
+    </label>
+    <button id="btn-jump-start" class="btn btn-ghost btn-sm">▶ Play this chunk</button>
+    <div class="panel-speed" title="Adjust speed while reviewing this chunk">
+      <button type="button" id="btn-panel-speed-down" class="btn btn-ghost btn-sm">Slower</button>
+      <span id="panel-speed-label" class="speed-label">1×</span>
+      <button type="button" id="btn-panel-speed-up" class="btn btn-ghost btn-sm">Faster</button>
+    </div>
+  </div>
+
+  <label class="field">
+    <span>Who is speaking?</span>
+    <input type="text" id="seg-speaker" placeholder="Teacher, boy in blue, group, unclear…">
+    <span class="field-hint">Free text — no fixed labels required</span>
+  </label>
+
+  <label class="field">
+    <span>What was said? (verbatim)</span>
+    <textarea id="seg-transcript" rows="4" placeholder="Exact words, including ums and repeats…"></textarea>
+    <span class="field-hint">Write exactly what you hear — saves automatically</span>
+  </label>
+
+  <div class="overlap-hint">
+    <strong>Same time, multiple speakers?</strong>
+    Creates a second label with identical start/end — e.g. teacher and students talking over each other. Each row exports separately.
+  </div>
+
+  <div class="panel-actions">
+    <button id="btn-save-seg" class="btn btn-primary" title="Ctrl+S">Save segment</button>
+    <button id="btn-overlap-seg" class="btn btn-overlap btn-sm" title="Duplicate time range for another speaker">+ Add speaker at same time</button>
+    <button id="btn-delete-seg" class="btn btn-danger btn-sm" title="Delete">Delete segment</button>
+  </div>
+</section>
+
+<section id="no-select" class="card noselect-box">
+  <p>Click a <span class="accent">blue segment</span> on the wave to edit it.</p>
+</section>
+
+<section class="card">
+  <label class="field">
+    <span>Session notes (optional)</span>
+    <input type="text" id="rec-notes" value="{{ recording.notes or '' }}" placeholder="Any notes about this recording">
+  </label>
+</section>
+
+<section class="card">
+  <div class="seg-list-header">
+    <h3>Segments <span id="seg-count" class="badge">0</span></h3>
+    <button id="btn-clear-segs" class="btn btn-danger btn-sm" hidden>Clear all</button>
+  </div>
+  <ul id="segment-list" class="segment-list"></ul>
+</section>
+
+<script>
+  const RECORDING_ID = {{ recording.id }};
+  const PROJECT_ID = {{ recording.project_id | default(0) }};
+  const AUDIO_URL = "/api/recordings/{{ recording.id }}/audio";
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/editor.js?v=10"></script>
+{% endblock %}

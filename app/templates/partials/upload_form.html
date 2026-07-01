@@ -1,0 +1,26 @@
+<form id="upload-form" class="upload-form">
+  {% if not fixed_project_id %}
+  <label class="field">
+    <span>Project</span>
+    <select name="project_id" required>
+      {% for p in projects %}
+      <option value="{{ p.id }}">{{ p.name }} ({{ p.recording_count }} recordings)</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% else %}
+  <input type="hidden" name="project_id" value="{{ fixed_project_id }}">
+  {% endif %}
+  <label class="field">
+    <span>Title</span>
+    <input type="text" name="title" placeholder="e.g. Meet Mr. Hester" required>
+    <span class="field-hint">A short name for this audio file</span>
+  </label>
+  <label class="field">
+    <span>Audio file</span>
+    <input type="file" name="file" accept=".mp3,.wav,.m4a,.ogg,.flac" required>
+    <span class="field-hint">MP3, WAV, M4A, OGG, FLAC</span>
+  </label>
+  <button type="submit" class="btn btn-primary">Upload &amp; transcribe</button>
+</form>
+<p id="upload-status" class="status-msg" hidden></p>

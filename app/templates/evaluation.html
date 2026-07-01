@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ recording.title }} — Evaluation{% endblock %}
+
+{% block page_header %}
+{% include "partials/recording_header.html" %}
+{% endblock %}
+
+{% block content %}
+
+<section class="compare-strip card">
+  <div class="compare-strip-item compare-ref">
+    <span class="compare-strip-label">Reference</span>
+    <strong>Your transcription</strong>
+    <span class="compare-strip-stat">{{ eval_ctx.human_chunks|default(0) }}/{{ eval_ctx.total_chunks|default(0) }} chunks · {{ eval_ctx.human_words|default(0) }} words</span>
+    <a href="{{ recording_url(recording.project_id, recording.id) }}" class="compare-strip-link">Edit in Transcribe →</a>
+  </div>
+  <div class="compare-strip-vs">compared to</div>
+  <div class="compare-strip-item compare-hyp">
+    <span class="compare-strip-label">Hypothesis</span>
+    <strong>LLM transcript</strong>
+    <span class="compare-strip-stat">{{ eval_ctx.llm_chunks|default(0) }}/{{ eval_ctx.total_chunks|default(0) }} chunks matched</span>
+    {% if eval_ctx and eval_ctx.has_llm_source %}
+    <span class="compare-strip-ok">Loaded{% if eval_ctx.llm_format %} · {{ eval_ctx.llm_format }}{% endif %}</span>
+    {% else %}
+    <span class="compare-strip-warn">Add below ↓</span>
+    {% endif %}
+  </div>
+</section>
+
+<section id="upload-section" class="card">
+  <h3 class="section-title">Add LLM transcript</h3>
+  <p class="section-desc">Paste or upload the model output. We auto-detect format and match lines to your audio chunks by time.</p>
+
+  <div class="input-tabs" role="tablist">
+    <button type="button" class="input-tab active" data-tab="paste" role="tab">Paste</button>
+    <button type="button" class="input-tab" data-tab="upload" role="tab">Upload file</button>
+  </div>
+
+  <div id="tab-paste" class="input-tab-panel">
+    <label class="field">
+      <textarea id="llm-paste" rows="8" placeholder="[00:07] Teacher: At the beginning of the year…"></textarea>
+    </label>
+    <div class="form-actions">
+      <select id="paste-format"><option value="">Auto-detect</option></select>
+      <select id="paste-language"><option value="en">English</option></select>
+      <button id="btn-paste-llm" class="btn btn-primary">Apply</button>
+    </div>
+  </div>
+
+  <div id="tab-upload" class="input-tab-panel" hidden>
+    <label class="field">
+      <input type="file" id="llm-file" accept=".json,.txt,.transcript" />
+      <span id="accepted-exts-hint" class="field-hint"></span>
+    </label>
+    <div class="form-actions">
+      <select id="upload-format"><option value="">Auto-detect</option></select>
+      <select id="upload-language"><option value="en">English</option></select>
+      <button id="btn-upload-llm" class="btn btn-primary">Upload</button>
+    </div>
+  </div>
+
+  <div id="upload-status" class="status-msg" hidden></div>
+  <div id="format-list" class="format-hint"></div>
+</section>
+
+<section id="llm-status-section" class="card" hidden>
+  <div class="card-header-row">
+    <h3 class="section-title">LLM status</h3>
+    <button id="btn-delete-llm" class="btn btn-danger btn-sm">Remove LLM text</button>
+  </div>
+  <div class="stats-grid stats-grid-compact">
+    <div class="stat-card"><span class="stat-value" id="stat-segments-total">—</span><span class="stat-label">Chunks</span></div>
+    <div class="stat-card highlight"><span class="stat-value" id="stat-segments-with-llm">—</span><span class="stat-label">With LLM</span></div>
+    <div class="stat-card"><span class="stat-value" id="stat-coverage">—</span><span class="stat-label">Coverage</span></div>
+    <div class="stat-card"><span class="stat-value" id="stat-format">—</span><span class="stat-label">Format</span></div>
+  </div>
+</section>
+
+<section id="evaluate-section" class="card" hidden>
+  <div class="card-header-row">
+    <div>
+      <h3 class="section-title">Run evaluation</h3>
+      <p class="section-desc">WER scores: semantic (fair) vs strict (exact words)</p>
+    </div>
+    <button id="btn-evaluate" class="btn btn-primary">Evaluate</button>
+  </div>
+  <div id="evaluate-status" class="status-msg" hidden></div>
+</section>
+
+<section id="results-section" class="card" hidden>
+  <h3 class="section-title">Results</h3>
+  <div class="evaluation-summary">
+    <div class="eval-score-row">
+      <div class="eval-main-score">
+        <span class="eval-score-label">Semantic WER</span>
+        <span class="eval-score-value" id="result-semantic-wer">—</span>
+      </div>
+      <div class="eval-main-score eval-secondary">
+        <span class="eval-score-label">Strict WER</span>
+        <span class="eval-score-value" id="result-wer">—</span>
+      </div>
+    </div>
+    <div class="eval-stats-grid">
+      <div class="eval-stat"><span class="eval-stat-value" id="result-semantic-accuracy">—</span><span class="eval-stat-label">Semantic accuracy</span></div>
+      <div class="eval-stat"><span class="eval-stat-value" id="result-accuracy">—</span><span class="eval-stat-label">Strict accuracy</span></div>
+      <div class="eval-stat"><span class="eval-stat-value" id="result-quality">—</span><span class="eval-stat-label">Quality</span></div>
+    </div>
+    <div class="eval-breakdown">
+      <h4>Errors</h4>
+      <div class="error-bars">
+        <div class="error-bar-row"><span class="error-bar-label">Substitutions</span><div class="progress-track"><div class="progress-fill transcript" id="bar-subs"></div></div><span class="error-bar-val" id="val-subs">0</span></div>
+        <div class="error-bar-row"><span class="error-bar-label">Deletions</span><div class="progress-track"><div class="progress-fill coverage" id="bar-dels"></div></div><span class="error-bar-val" id="val-dels">0</span></div>
+        <div class="error-bar-row"><span class="error-bar-label">Insertions</span><div class="progress-track"><div class="progress-fill speaker" id="bar-ins"></div></div><span class="error-bar-val" id="val-ins">0</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="segment-details" class="card" hidden>
+  <h3 class="section-title">Per-chunk comparison</h3>
+  <div id="segment-list" class="eval-segment-list"></div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>const RECORDING_ID = {{ recording.id }};</script>
+<script src="/static/js/evaluation.js?v=5"></script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">Dashboard</h1>
+<p class="page-subtitle">Your classroom transcription projects at a glance</p>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+  <div class="dashboard-hero-text">
+    <h2>Welcome back</h2>
+    <p>Organize recordings by class or session. Open a project to upload audio, transcribe, and evaluate against LLM output.</p>
+  </div>
+  <a href="/projects/new" class="btn btn-primary">＋ New project</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-value">{{ totals.project_count }}</span>
+    <span class="stat-label">Projects</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ totals.recording_count }}</span>
+    <span class="stat-label">Recordings</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-value">{{ fmt_duration(totals.total_duration_ms) }}</span>
+    <span class="stat-label">Audio total</span>
+  </div>
+  <div class="stat-card highlight">
+    <span class="stat-value">{{ totals.transcript_pct }}%</span>
+    <span class="stat-label">Transcribed</span>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-header-row">
+    <h2>Projects</h2>
+    <a href="/projects/new" class="btn btn-ghost btn-sm">Create project</a>
+  </div>
+
+  {% if projects %}
+  <div class="project-grid">
+    {% for p in projects %}
+    <article class="project-tile">
+      <header class="project-tile-header">
+        <h3><a href="/projects/{{ p.id }}" class="project-tile-title">{{ p.name }}</a></h3>
+        <span class="badge">{{ p.recording_count }} recording{% if p.recording_count != 1 %}s{% endif %}</span>
+      </header>
+      {% if p.description %}
+      <p class="project-tile-desc">{{ p.description }}</p>
+      {% else %}
+      <p class="project-tile-desc muted">No description</p>
+      {% endif %}
+      <div class="project-tile-stats">
+        <span>{{ fmt_duration(p.total_duration_ms) }} audio</span>
+        <span>{{ p.transcript_pct }}% transcribed</span>
+      </div>
+      <div class="project-tile-progress">
+        <div class="progress-track wide">
+          <div class="progress-fill transcript" style="width:{{ p.transcript_pct }}%"></div>
+        </div>
+      </div>
+      <footer class="project-tile-actions">
+        <a href="/projects/{{ p.id }}" class="btn btn-primary btn-sm">Open</a>
+        <a href="/projects/{{ p.id }}/upload" class="btn btn-ghost btn-sm">Upload</a>
+        <a href="/projects/{{ p.id }}/settings" class="btn btn-ghost btn-sm">Settings</a>
+      </footer>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No projects yet. Create one to start organizing classroom recordings.</p>
+    <a href="/projects/new" class="btn btn-primary">Create your first project</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

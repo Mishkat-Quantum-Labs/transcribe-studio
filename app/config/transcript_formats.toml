@@ -1,0 +1,47 @@
+# Transcribe Studio — transcript import formats
+# Contributors: add a parser module + entry here
+
+[transcript_formats]
+# First matching parser wins (auto-detect)
+detection_order = ["timestamp_speaker", "json_segments", "plain_text"]
+
+# File upload only — paste accepts any text (format auto-detected from content)
+[transcript_formats.upload]
+accepted_extensions = [".json", ".txt", ".transcript"]
+max_bytes = 5242880
+
+[transcript_formats.alignment]
+# When aligning [MM:SS] lines to audio chunks, prefix with speaker name?
+include_speaker = false
+
+[transcript_formats.formats.timestamp_speaker]
+name = "Timestamp + Speaker"
+description = "Lines like [MM:SS] Speaker: text — common in LLM / classroom exports"
+enabled = true
+extensions = [".txt", ".transcript"]
+example = "[00:07] Teacher: At the beginning of the year..."
+
+[transcript_formats.formats.json_segments]
+name = "JSON segments"
+description = "Structured JSON with segment id or start_ms"
+enabled = true
+extensions = [".json"]
+example = '{"segments": [{"id": 1, "text": "Hello"}]}'
+
+[transcript_formats.formats.plain_text]
+name = "Plain text"
+description = "Single block of text (applied to every chunk — quick test only)"
+enabled = true
+extensions = [".txt"]
+example = "Full transcript as one paragraph..."
+
+# Future formats (enable when parser exists):
+# [transcript_formats.formats.srt]
+# name = "SubRip subtitles"
+# enabled = false
+# extensions = [".srt"]
+
+# [transcript_formats.formats.vtt]
+# name = "WebVTT"
+# enabled = false
+# extensions = [".vtt"]

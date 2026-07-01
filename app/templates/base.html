@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Transcribe Studio{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=8">
+  {% block head %}{% endblock %}
+</head>
+<body class="app-shell">
+  {% include "partials/sidebar.html" %}
+  <div class="main-area">
+    <header class="page-header{% if recording %} page-header-recording{% endif %}">
+      {% if not recording %}{% include "partials/breadcrumbs.html" %}{% endif %}
+      {% block page_header %}{% endblock %}
+    </header>
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script>
+    document.getElementById('sidebar-toggle')?.addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-collapsed');
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

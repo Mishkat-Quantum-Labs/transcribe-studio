@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Upload — {{ project.name }}{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">Upload recording</h1>
+<p class="page-subtitle">Add audio to <strong>{{ project.name }}</strong></p>
+{% endblock %}
+
+{% block content %}
+<div class="hint-card">
+  <strong>What happens next</strong>
+  <p>After upload you'll go straight to the waveform editor for this recording.</p>
+</div>
+
+<section class="card upload-card">
+  {% with fixed_project_id=project.id %}
+  {% include "partials/upload_form.html" %}
+  {% endwith %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PROJECT_ID = {{ project.id }};
+
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const status = document.getElementById('upload-status');
+  const btn = form.querySelector('button');
+  btn.disabled = true;
+  status.hidden = false;
+  status.textContent = 'Uploading…';
+  status.className = 'status-msg';
+  try {
+    const res = await fetch('/api/recordings', { method: 'POST', body: new FormData(form) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Upload failed');
+    window.location.href = `/projects/${PROJECT_ID}/recordings/${data.id}`;
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-msg error';
+    btn.disabled = false;
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <a href="/" class="brand">Transcribe Studio</a>
+    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle menu">☰</button>
+  </div>
+  <nav class="sidebar-nav" aria-label="Main">
+    <a href="/" class="nav-item{% if nav_active == 'dashboard' %} active{% endif %}">
+      <span class="nav-icon">◉</span> Dashboard
+    </a>
+    <a href="/projects/new" class="nav-item{% if nav_active == 'project_new' %} active{% endif %}">
+      <span class="nav-icon">＋</span> New project
+    </a>
+
+    <div class="nav-section">Projects</div>
+    <div class="project-tree">
+      {% if sidebar_tree %}
+        {% for proj in sidebar_tree %}
+        <details class="tree-project"{% if project and project.id == proj.id %} open{% elif recording and recording.project_id == proj.id %} open{% endif %}>
+          <summary class="tree-project-label">
+            <span class="tree-chevron" aria-hidden="true"></span>
+            <a href="/projects/{{ proj.id }}" class="tree-project-link" onclick="event.stopPropagation()">{{ proj.name }}</a>
+            <span class="tree-count">{{ proj.recordings|length }}</span>
+          </summary>
+          <ul class="tree-recordings">
+            {% for rec in proj.recordings %}
+            <li>
+              <a href="{{ recording_url(proj.id, rec.id) }}"
+                 class="tree-recording-link{% if recording and recording.id == rec.id %} active{% endif %}"
+                 title="{{ rec.title }}">
+                {{ rec.title }}
+              </a>
+            </li>
+            {% else %}
+            <li class="tree-empty"><a href="/projects/{{ proj.id }}/upload">Upload first recording</a></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endfor %}
+      {% else %}
+        <p class="tree-empty"><a href="/projects/new">Create a project</a></p>
+      {% endif %}
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="sidebar-tagline">Classroom · verbatim · ms timestamps</span>
+  </div>
+</aside>

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Projects — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">Projects &amp; recordings</h1>
+<p class="page-subtitle">Browse by project — each recording has Transcribe, Analysis, and Evaluation</p>
+{% endblock %}
+
+{% block content %}
+<div class="card-header-row" style="margin-bottom:16px">
+  <span></span>
+  <a href="/upload" class="btn btn-primary btn-sm">＋ Upload recording</a>
+</div>
+
+{% if project_sections %}
+  {% for section in project_sections %}
+  <section class="card project-card">
+    <div class="project-card-header">
+      <h2 class="project-name">
+        <span class="tree-folder">▸</span> {{ section.name }}
+        <span class="badge">{{ section.recordings|length }}</span>
+      </h2>
+      <a href="/recordings?project={{ section.id }}" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+
+    {% if section.recordings %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Recording</th>
+          <th>Duration</th>
+          <th>Chunks</th>
+          <th>Transcribed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in section.recordings %}
+        <tr>
+          <td><a href="/recordings/{{ r.id }}" class="table-link">{{ r.title }}</a></td>
+          <td>{{ fmt_duration(r.duration_ms) }}</td>
+          <td>{{ r.segment_count }}</td>
+          <td>
+            <div class="mini-progress">
+              <div class="progress-track"><div class="progress-fill transcript" style="width:{{ r.transcript_pct }}%"></div></div>
+              <span>{{ r.transcript_pct }}%</span>
+            </div>
+          </td>
+          <td class="actions-cell">
+            <a href="/recordings/{{ r.id }}" class="btn btn-primary btn-sm">Open</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty project-empty">No recordings in this project. <a href="/upload">Upload audio</a></p>
+    {% endif %}
+  </section>
+  {% endfor %}
+{% else %}
+<section class="card">
+  <p class="empty">No projects yet. <a href="/upload">Upload audio</a> to get started.</p>
+</section>
+{% endif %}
+{% endblock %}

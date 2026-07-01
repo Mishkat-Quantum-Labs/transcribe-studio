@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{% if form_mode == 'create' %}New project{% else %}Project settings{% endif %} — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">{% if form_mode == 'create' %}New project{% else %}Project settings{% endif %}</h1>
+<p class="page-subtitle">{% if form_mode == 'create' %}Create a project to group related classroom recordings{% else %}Update name and description{% endif %}</p>
+{% endblock %}
+
+{% block content %}
+<section class="card form-card">
+  <form id="project-form" class="stack-form">
+    <label class="field">
+      <span>Project name</span>
+      <input type="text" name="name" value="{{ project.name }}" placeholder="e.g. Period 3 — Biology" required maxlength="200">
+      <span class="field-hint">Shown in the sidebar and dashboard</span>
+    </label>
+    <label class="field">
+      <span>Description <span class="optional">(optional)</span></span>
+      <textarea name="description" rows="3" placeholder="Class, term, or notes for collaborators">{{ project.description or '' }}</textarea>
+    </label>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if form_mode == 'create' %}Create project{% else %}Save changes{% endif %}
+      </button>
+      {% if form_mode == 'edit' %}
+      <a href="/projects/{{ project.id }}" class="btn btn-ghost">Cancel</a>
+      <button type="button" id="btn-delete-project" class="btn btn-danger">Delete project</button>
+      {% else %}
+      <a href="/" class="btn btn-ghost">Cancel</a>
+      {% endif %}
+    </div>
+    <p id="project-status" class="status-msg" hidden></p>
+  </form>
+</section>
+
+{% if form_mode == 'edit' %}
+<div class="hint-card danger-hint">
+  <strong>Delete project</strong>
+  <p>Only empty projects can be deleted. Move or delete all recordings first.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const FORM_MODE = {{ form_mode | tojson }};
+const PROJECT_ID = {{ project.id | default(0) | tojson }};
+
+document.getElementById('project-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const status = document.getElementById('project-status');
+  const btn = form.querySelector('button[type="submit"]');
+  const body = {
+    name: form.name.value.trim(),
+    description: form.description.value.trim(),
+  };
+  btn.disabled = true;
+  status.hidden = false;
+  status.textContent = 'Saving…';
+  status.className = 'status-msg';
+  try {
+    const url = FORM_MODE === 'create' ? '/api/projects' : `/api/projects/${PROJECT_ID}`;
+    const method = FORM_MODE === 'create' ? 'POST' : 'PATCH';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Save failed');
+    const pid = data.project?.id || PROJECT_ID;
+    window.location.href = `/projects/${pid}`;
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-msg error';
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('btn-delete-project')?.addEventListener('click', async () => {
+  if (!confirm('Delete this project? This cannot be undone.')) return;
+  const status = document.getElementById('project-status');
+  status.hidden = false;
+  status.textContent = 'Deleting…';
+  status.className = 'status-msg';
+  try {
+    const res = await fetch(`/api/projects/${PROJECT_ID}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Delete failed');
+    window.location.href = '/';
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'status-msg error';
+  }
+});
+</script>
+{% endblock %}

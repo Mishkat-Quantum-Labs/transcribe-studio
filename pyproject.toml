@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transcribe-studio"
+version = "0.2.0"
+description = "Local classroom audio transcription with projects, WER evaluation, and pluggable transcript formats"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Mishkat Quantum Labs" }]
+keywords = ["transcription", "classroom", "audio", "wer", "speech", "evaluation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.12",
+    "aiofiles>=24.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "build>=1.0", "twine>=5.0"]
+
+[project.scripts]
+transcribe-studio = "app.main:run"
+
+[project.urls]
+Homepage = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio"
+Repository = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio"
+Issues = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio/issues"
+Changelog = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.setuptools.package-data]
+"app" = ["templates/**/*", "static/**/*", "config/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
