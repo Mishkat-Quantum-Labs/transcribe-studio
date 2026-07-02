@@ -32,3 +32,24 @@ infra/crash.*.log
 infra/*.pem
 infra/*.pub
 infra/.terraform.tfstate.lock.info
+
+# Any terraform anywhere (defense in depth)
+**/.terraform/
+**/*.tfstate*
+**/*_override.tf*
+
+# Secrets / credentials (never leak)
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+aws-credentials
+.aws/
+supabase.env
+*.tfvars
+!*.tfvars.example
+!terraform.tfvars.example
+
+# Note: infra/ *code* is committed (public Terraform), but state + tfvars + keys are ignored above.
+# The Python package (PyPI) only includes the "app" module thanks to pyproject.toml — infra never ships in wheels.

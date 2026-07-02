@@ -6,9 +6,45 @@ Requires **Python 3.11+**.
 
 ---
 
-## Quick setup (recommended)
+## Simple classic installs
 
-Install once, then run with one word: **`transcribe`** (like typing `grok`).
+### From PyPI
+
+```bash
+# Fast with uv
+uv pip install transcribe-studio
+
+# Or plain pip
+pip install transcribe-studio
+```
+
+### From source (git clone)
+
+```bash
+git clone https://github.com/Mishkat-Quantum-Labs/transcribe-studio.git
+cd transcribe-studio
+
+# Recommended
+uv pip install -e .
+
+# Alternative
+pip install -e .
+```
+
+### Run the app
+
+```bash
+transcribe
+# alternatives:
+# python -m app
+# uvicorn app.main:app --host 0.0.0.0 --port 8082
+```
+
+---
+
+## Optional one-liner (pipx style)
+
+If you want the fancy "install once" experience:
 
 ### Windows (PowerShell)
 
@@ -22,11 +58,18 @@ irm https://raw.githubusercontent.com/Mishkat-Quantum-Labs/transcribe-studio/mai
 curl -fsSL https://raw.githubusercontent.com/Mishkat-Quantum-Labs/transcribe-studio/main/scripts/build.sh | bash
 ```
 
-### Run
+Then open **new terminal** and type `transcribe`.
 
-1. **Close** the install terminal
-2. Open a **new** terminal
-3. Type:
+---
+
+## Old school / manual
+
+```bash
+pipx install transcribe-studio
+transcribe
+```
+
+---
 
 ```bash
 transcribe

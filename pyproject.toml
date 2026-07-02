@@ -46,9 +46,15 @@ Changelog = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio/blob/main
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+exclude = ["tests*", "infra*", "docs*", "scripts*", "terminals*", "data*"]
 
 [tool.setuptools.package-data]
 "app" = ["templates/**/*", "static/**/*", "config/**/*"]
+
+# Safety: we do not want infra/ or credentials ever in a PyPI release
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

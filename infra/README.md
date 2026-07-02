@@ -1,40 +1,58 @@
-# Transcribe Studio — AWS Terraform (free tier)
+# Transcribe Studio — AWS Terraform (free tier + pm2)
 
-Deploys a **t2.micro** EC2 instance on **Amazon Linux 2** with nginx on port **80** proxying to the app.
+Deploys a **t2.micro** (or t3.micro) EC2 instance on **Amazon Linux 2**.
+
+**Deployment style (as requested):**
+- Git clone (source, not PyPI package)
+- `uv pip install -e .`
+- FastAPI served by **uvicorn** managed by **pm2**
+- nginx reverse proxy on port 80
+
+This is a classic "old school" deploy — no fancy pipx on the server.
 
 ## Prerequisites
 
-- [Terraform](https://www.terraform.io/downloads) >= 1.5
-- AWS CLI configured (`aws configure`)
-- Free-tier eligible account (first 12 months)
+- Terraform >= 1.5
+- AWS CLI configured
+- Free tier account (t2.micro = 750 hrs/month free)
 
 ## Deploy
 
 ```bash
 cd infra
-cp terraform.tfvars.example terraform.tfvars   # edit if needed
+cp terraform.tfvars.example terraform.tfvars   # at minimum set ssh_cidr if you want SSH
 terraform init
 terraform plan
 terraform apply
 ```
 
-Open the URL from `terraform output app_url`.
-
-## Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `app_port` | `8082` | Internal app port |
-| `listener_port` | `80` | Public HTTP port (nginx) |
-| `instance_type` | `t2.micro` | EC2 size |
-| `app_package` | `transcribe-studio>=0.2.1` | pip package on instance |
-
-Change app port:
-
-```hcl
-app_port = 9000
-listener_port = 80
+Get the URL:
+```bash
+terraform output app_url
 ```
+
+SSH (if you set key + ssh_cidr):
+```bash
+ssh -i your-key.pem ec2-user@<public-ip>
+sudo -u ec2-user pm2 status
+sudo -u ec2-user pm2 logs transcribe
+```
+
+## Variables (important)
+
+| Variable     | Default | Notes |
+|--------------|---------|-------|
+| `instance_type` | `t2.micro` | Free tier |
+| `git_repo`   | the public repo | Change for your fork |
+| `git_branch` | `main` | |
+| `app_port`   | 8082 | Internal |
+| `listener_port` | 80 | Public via nginx |
+
+## After deploy
+
+1. Open the public URL.
+2. Go to **Settings** and connect your Supabase project (the app will auto-create tables).
+3. Upload audio and have fun.
 
 ## Destroy
 
@@ -44,8 +62,7 @@ terraform destroy
 
 ## Notes
 
-- Data persists on the instance at `/var/lib/transcribe-studio`
-- Configure **Supabase** in the app UI under **Settings** after deploy (URL, anon key, database URL for auto table creation)
-- Supabase credentials stay on the instance only — never committed to git
-- CLI on the instance: `transcribe` or `transcribe-studio` (after pip install)
-- Never commit `terraform.tfvars`, `.terraform/`, or `*.tfstate`
+- Everything is installed from git source using `uv`.
+- pm2 manages the uvicorn process (autorestart, memory limit).
+- Data lives at `/var/lib/transcribe-studio` (owned by ec2-user).
+- Never commit `terraform.tfvars` or state files.

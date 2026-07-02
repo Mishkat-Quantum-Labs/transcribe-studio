@@ -1,8 +1,11 @@
 aws_region    = "us-east-1"
-instance_type = "t2.micro"
+instance_type = "t2.micro"   # free tier eligible (or t3.micro)
 app_port      = 8082
 listener_port = 80
 
-# Optional SSH (your IP only)
-# key_name = "my-keypair"
-# ssh_cidr = "203.0.113.10/32"
+git_repo   = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio.git"
+git_branch = "main"
+
+# Optional SSH (your IP only recommended)
+# key_name = "your-key"
+# ssh_cidr = "YOUR.IP.HERE/32"

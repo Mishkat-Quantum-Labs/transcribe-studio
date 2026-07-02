@@ -16,38 +16,41 @@ Built for researchers and annotators who need millisecond timestamps and exporta
 - **LLM evaluation** — WER + semantic WER vs uploaded transcripts
 - **Supabase** — connect your own project; tables auto-created from **Settings**
 
-## Setup
+## Setup (simple & classic)
 
-Install once (Python 3.11+ required):
+Python 3.11+ required.
 
-**Windows (PowerShell):**
-
-```powershell
-irm https://raw.githubusercontent.com/Mishkat-Quantum-Labs/transcribe-studio/main/scripts/build.ps1 | iex
-```
-
-**Linux / macOS:**
+### 1. From PyPI (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Mishkat-Quantum-Labs/transcribe-studio/main/scripts/build.sh | bash
+# With uv (fastest)
+uv pip install transcribe-studio
+
+# Or classic pip
+pip install transcribe-studio
 ```
 
-Open a **new** terminal, then:
-
-```powershell
-transcribe
-```
-
-Runs in the **foreground** — terminal stays open until **Ctrl+C**. Opens **http://127.0.0.1:8082**
-
-Full install guide: **[docs/INSTALL.md](docs/INSTALL.md)**
-
-### Manual install
+### 2. From git clone (latest code)
 
 ```bash
-pipx install transcribe-studio
-transcribe
+git clone https://github.com/Mishkat-Quantum-Labs/transcribe-studio.git
+cd transcribe-studio
+uv pip install -e .     # or: pip install -e .
 ```
+
+### Run
+
+```bash
+transcribe
+# or: python -m app
+# or: uvicorn app.main:app --host 0.0.0.0 --port 8082
+```
+
+Runs in the **foreground** (Ctrl+C to stop). Opens http://127.0.0.1:8082
+
+Full instructions + one-liner option: [docs/INSTALL.md](docs/INSTALL.md)
+
+**For server deployment** see the `infra/` folder (Terraform + EC2 + pm2 + git clone).
 
 ## CLI
 

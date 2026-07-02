@@ -22,10 +22,23 @@ variable "listener_port" {
   default     = 80
 }
 
-variable "app_package" {
-  description = "PyPI package spec to install on the instance"
+variable "git_repo" {
+  description = "Git repository to clone (for source-based deploy, no PyPI)"
   type        = string
-  default     = "transcribe-studio>=0.2.6"
+  default     = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio.git"
+}
+
+variable "git_branch" {
+  description = "Branch to checkout"
+  type        = string
+  default     = "main"
+}
+
+# Deprecated: use git clone + uv instead of PyPI package on server
+variable "app_package" {
+  description = "(deprecated) kept for compatibility"
+  type        = string
+  default     = ""
 }
 
 variable "key_name" {

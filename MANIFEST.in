@@ -1,0 +1,26 @@
+# Only include the Python package and its data. 
+# Explicitly exclude deployment, infra, docs, tests, etc. so nothing sensitive or unnecessary leaks to PyPI.
+
+include README.md
+include LICENSE
+include pyproject.toml
+
+recursive-include app *.py *.toml *.html *.css *.js *.json *.txt
+
+# Explicit excludes
+prune infra
+prune docs
+prune scripts
+prune terminals
+prune tests
+prune data
+prune dist
+prune .github
+prune .terraform
+global-exclude *.tfstate*
+global-exclude *.pem
+global-exclude terraform.tfvars
+global-exclude *.log
+global-exclude .env*
+global-exclude *.key
+global-exclude id_rsa*

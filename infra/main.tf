@@ -59,9 +59,10 @@ resource "aws_instance" "app" {
   key_name               = var.key_name != "" ? var.key_name : null
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
+    git_repo      = var.git_repo
+    git_branch    = var.git_branch
     app_port      = var.app_port
     listener_port = var.listener_port
-    app_package   = var.app_package
   })
 
   root_block_device {
