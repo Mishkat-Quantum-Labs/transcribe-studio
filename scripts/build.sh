@@ -24,17 +24,26 @@ done
 step "Python: $PY"
 step "Installing transcribe-studio (pipx)..."
 
-"$PY" -m pip install --upgrade pip pipx wheel >/dev/null
+echo "  Upgrading pip + pipx + wheel..."
+"$PY" -m pip install --upgrade --quiet pip pipx wheel >/dev/null 2>&1 || true
 
 if ! command -v pipx >/dev/null 2>&1; then
-  "$PY" -m pipx >/dev/null
+  "$PY" -m pipx ensurepath --force >/dev/null 2>&1 || true
 fi
 
 export PATH="${HOME}/.local/bin:${PATH}"
-pipx install transcribe-studio --force >/dev/null 2>&1 || {
-  step "pipx failed — using pip --user"
-  "$PY" -m pip install --user --upgrade transcribe-studio >/dev/null
-}
+echo "  Running pipx install for transcribe-studio..."
+if command -v pipx >/dev/null 2>&1; then
+  pipx install transcribe-studio --force || {
+    step "pipx failed — using pip --user"
+    "$PY" -m pip install --user --upgrade transcribe-studio >/dev/null
+  }
+else
+  "$PY" -m pipx install transcribe-studio --force || {
+    step "pipx failed — using pip --user"
+    "$PY" -m pip install --user --upgrade transcribe-studio >/dev/null
+  }
+fi
 
 "$PY" -m pipx ensurepath >/dev/null 2>&1 || true
 
@@ -47,7 +56,7 @@ for rc in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
 done
 
 echo ""
-echo "  Installed."
+echo "  ✓ Installed."
 echo ""
 echo "  Open a new terminal, then type:"
 echo ""

@@ -49,22 +49,23 @@ if (-not $py) {
     exit 1
 }
 
-function Invoke-Py([string[]]$Args) {
+function Invoke-Py([string[]]$PyArgs) {
     if ($py -like "py -*") {
         $p = $py.Split(" ", 2)
-        & $p[0] $p[1] @Args
+        & $p[0] $p[1] @PyArgs
     } else {
-        & $py @Args
+        & $py @PyArgs
     }
 }
 
 Write-Step "Python: $py"
 Write-Step "Installing transcribe-studio (pipx)..."
 
-Invoke-Py @("-m", "pip", "install", "--upgrade", "pip", "pipx", "wheel") | Out-Null
+Write-Host "  Upgrading pip + pipx + wheel..." -ForegroundColor DarkGray
+Invoke-Py @("-m", "pip", "install", "--upgrade", "--quiet", "pip", "pipx", "wheel") | Out-Null
 
 if (-not (Get-Command pipx -ErrorAction SilentlyContinue)) {
-    Invoke-Py @("-m", "pipx") | Out-Null
+    Invoke-Py @("-m", "pipx", "ensurepath", "--force") 2>&1 | Out-Null
 }
 
 $pipxPaths = @(
@@ -76,7 +77,13 @@ $pipxPaths = @(
 )
 foreach ($p in $pipxPaths) { Add-UserPath $p }
 
-pipx install transcribe-studio --force 2>&1 | Out-Null
+Write-Host "  Running pipx install for transcribe-studio..." -ForegroundColor DarkGray
+# Let pipx output its progress (creating venv, installing, done!) so the user sees activity
+if (Get-Command pipx -ErrorAction SilentlyContinue) {
+    pipx install transcribe-studio --force
+} else {
+    Invoke-Py @("-m", "pipx", "install", "transcribe-studio", "--force")
+}
 if ($LASTEXITCODE -ne 0) {
     Write-Step "pipx failed — using pip --user"
     Invoke-Py @("-m", "pip", "install", "--user", "--upgrade", "transcribe-studio") | Out-Null
@@ -87,12 +94,18 @@ if ($LASTEXITCODE -ne 0) {
     Add-UserPath $userScripts
 }
 
-try { pipx ensurepath --force 2>&1 | Out-Null } catch { }
+try {
+    if (Get-Command pipx -ErrorAction SilentlyContinue) {
+        pipx ensurepath --force 2>&1 | Out-Null
+    } else {
+        Invoke-Py @("-m", "pipx", "ensurepath", "--force") 2>&1 | Out-Null
+    }
+} catch { }
 
 foreach ($p in $pipxPaths) { Add-UserPath $p }
 
 Write-Host ""
-Write-Host "  Installed." -ForegroundColor Green
+Write-Host "  ✓ Installed." -ForegroundColor Green
 Write-Host ""
 Write-Host "  Close this window, open a new PowerShell, then type:" -ForegroundColor White
 Write-Host ""

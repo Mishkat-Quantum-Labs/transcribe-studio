@@ -4,6 +4,10 @@
 
 ### Fixed
 - Python 3.13 on Windows: `WinError 123` from `_pyrepl` in Cursor/integrated terminals (`PYTHON_BASIC_REPL=1`)
+- `scripts/build.ps1` one-liner (`irm ... | iex`): dropped straight into Python REPL instead of installing (parameter `$Args` collided with PowerShell automatic `$args`, so all `Invoke-Py` calls ran `python` with zero arguments)
+- Install scripts (`build.ps1` + `build.sh`) were completely silent during pip/pipx steps (everything went to `Out-Null` / `/dev/null`). Now print stage messages and stream real pipx progress ("creating virtual environment...", "done! ✨")
+- Removed useless bare `python -m pipx` (no subcommand) calls
+- Improved pipx invocation fallback when the `pipx` command isn't on PATH yet (common right after first `pip install pipx`)
 
 ## 0.2.6 — 2026-07-02
 
