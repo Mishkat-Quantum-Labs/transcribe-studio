@@ -51,12 +51,12 @@ module.exports = {
     name: "transcribe",
     cwd: "/opt/transcribe-studio",
     script: "./.venv/bin/uvicorn",
-    args: "app.main:app --host 0.0.0.0 --port 8082",
+    args: "app.main:app --host 0.0.0.0 --port ${app_port}",
     interpreter: "none",
     env: {
       TRANSCRIBE_STUDIO_DATA: "/var/lib/transcribe-studio",
       TRANSCRIBE_STUDIO_HOST: "0.0.0.0",
-      TRANSCRIBE_STUDIO_PORT: "8082"
+      TRANSCRIBE_STUDIO_PORT: "${app_port}"
     },
     instances: 1,
     exec_mode: "fork",
@@ -81,14 +81,14 @@ sudo -u ec2-user bash -c '
 # --- Nginx reverse proxy (port 80 -> app) ---
 cat > /etc/nginx/conf.d/transcribe-studio.conf <<NGINX
 server {
-    listen ${LISTENER_PORT} default_server;
-    listen [::]:${LISTENER_PORT} default_server;
+    listen ${listener_port} default_server;
+    listen [::]:${listener_port} default_server;
     server_name _;
 
     client_max_body_size 100M;
 
     location / {
-        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_pass http://127.0.0.1:${app_port};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -106,4 +106,4 @@ systemctl restart nginx
 echo "==> Deployment complete. App managed by pm2."
 echo "==> Check: sudo -u ec2-user pm2 status"
 echo "==> Logs:  sudo -u ec2-user pm2 logs transcribe"
-echo "==> Public URL will be on port ${LISTENER_PORT}"
+echo "==> Public URL will be on port ${listener_port}"
