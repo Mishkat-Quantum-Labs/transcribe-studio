@@ -223,3 +223,33 @@ python -m app
 - API responses mask all secrets; only `configured` / `*_set` flags are exposed
 - Install scripts do not collect or transmit credentials
 - Revoke and rotate keys in Supabase if a machine is compromised
+
+## Deploy to AWS (free tier EC2 + pm2 + git + uv)
+
+```bash
+cd infra
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars (only non-secret values). Do NOT commit it.
+
+terraform init
+terraform plan
+terraform apply
+```
+
+Get your live EC2 URL:
+
+```bash
+terraform output app_url
+```
+
+The deployment:
+- Uses **git clone** of the source
+- `uv pip install -e .` (no PyPI package on the server)
+- Runs the FastAPI app under **pm2**
+- nginx on port 80
+
+Full guide + troubleshooting: `infra/README.md`
+
+**Leak protection:**
+- `terraform.tfvars`, `*.tfstate*`, keys are .gitignored
+- PyPI releases only ship the `app/` code (see MANIFEST.in + pyproject.toml)
