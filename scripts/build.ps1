@@ -61,8 +61,19 @@ function Invoke-Py([string[]]$PyArgs) {
 Write-Step "Python: $py"
 Write-Step "Installing transcribe-studio (pipx)..."
 
-Write-Host "  Upgrading pip + pipx + wheel..." -ForegroundColor DarkGray
-Invoke-Py @("-m", "pip", "install", "--upgrade", "--quiet", "pip", "pipx", "wheel") | Out-Null
+# Detect Microsoft Store Python (common source of hangs/slow installs)
+$pyExe = $null
+try { $pyExe = (Invoke-Py @("-c", "import sys; print(sys.executable)")) 2>$null } catch {}
+if ($pyExe -and $pyExe -match 'WindowsApps\\Python') {
+    Write-Host "  NOTE: Using Microsoft Store Python (sandboxed)." -ForegroundColor Yellow
+    Write-Host "  Installs can be slow or restricted. For best results use the full" -ForegroundColor Yellow
+    Write-Host "  installer from https://www.python.org/downloads/ (uncheck 'Add python.exe to PATH' alias)." -ForegroundColor Yellow
+}
+
+Write-Host "  Upgrading pip + installing pipx + wheel..." -ForegroundColor DarkGray
+Write-Host "  (first run often takes 30s–3 minutes while downloading packages from PyPI)" -ForegroundColor DarkGray
+# Use --user for pipx (recommended and more reliable on restricted Pythons like MS Store)
+Invoke-Py @("-m", "pip", "install", "--user", "--upgrade", "--quiet", "--disable-pip-version-check", "pip", "pipx", "wheel") 2>&1 | Out-Null
 
 if (-not (Get-Command pipx -ErrorAction SilentlyContinue)) {
     Invoke-Py @("-m", "pipx", "ensurepath", "--force") 2>&1 | Out-Null
@@ -78,6 +89,7 @@ $pipxPaths = @(
 foreach ($p in $pipxPaths) { Add-UserPath $p }
 
 Write-Host "  Running pipx install for transcribe-studio..." -ForegroundColor DarkGray
+Write-Host "  (creating isolated venv + downloading the app - another 30-90s typical)" -ForegroundColor DarkGray
 # Let pipx output its progress (creating venv, installing, done!) so the user sees activity
 if (Get-Command pipx -ErrorAction SilentlyContinue) {
     pipx install transcribe-studio --force
