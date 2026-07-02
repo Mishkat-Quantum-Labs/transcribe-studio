@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import app._bootstrap  # noqa: F401 — Windows console fix (must be first)
+
 import argparse
 import os
 import sys

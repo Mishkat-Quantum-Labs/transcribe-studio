@@ -132,6 +132,17 @@ cd path\to\transcribe-studio
 python -m app
 ```
 
+### Python `WinError 123` / `_pyrepl` errors (Windows)
+
+If you see repeated `_pyrepl\windows_console.py` / `WinError 123` tracebacks (common in Python 3.13 + Cursor or integrated terminals):
+
+```powershell
+$env:PYTHON_BASIC_REPL = "1"
+[Environment]::SetEnvironmentVariable("PYTHON_BASIC_REPL", "1", "User")
+```
+
+Close the terminal, open a new one, then run `transcribe` again. The install script (`build.ps1`) sets this automatically.
+
 ### Port already in use
 
 ```bash

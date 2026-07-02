@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.7 — 2026-07-02
+
+### Fixed
+- Python 3.13 on Windows: `WinError 123` from `_pyrepl` in Cursor/integrated terminals (`PYTHON_BASIC_REPL=1`)
+
 ## 0.2.6 — 2026-07-02
 
 ### Added

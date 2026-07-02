@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transcribe-studio"
-version = "0.2.6"
+version = "0.2.7"
 description = "Local classroom audio transcription with projects, WER evaluation, and pluggable transcript formats"
 readme = "README.md"
 license = "MIT"

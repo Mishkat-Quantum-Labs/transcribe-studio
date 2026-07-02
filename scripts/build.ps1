@@ -5,6 +5,11 @@
 
 $ErrorActionPreference = "Stop"
 
+# Python 3.13 + Windows: prevent _pyrepl WinError 123 in Cursor/integrated terminals
+$env:PYTHON_BASIC_REPL = "1"
+$env:PIP_NO_INPUT = "1"
+[Environment]::SetEnvironmentVariable("PYTHON_BASIC_REPL", "1", "User")
+
 function Write-Step($msg) { Write-Host "  $msg" -ForegroundColor Cyan }
 
 function Add-UserPath([string]$Dir) {
