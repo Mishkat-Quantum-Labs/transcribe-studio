@@ -26,17 +26,29 @@ terraform plan
 terraform apply
 ```
 
-Get the URL:
+**Get your EC2 link:**
+
 ```bash
 terraform output app_url
 ```
 
-SSH (if you set key + ssh_cidr):
+Example output:
+http://ec2-3-85-xxx-xxx.compute-1.amazonaws.com:80
+
+Open that in your browser.
+
+SSH (if you configured key + ssh_cidr):
 ```bash
 ssh -i your-key.pem ec2-user@<public-ip>
 sudo -u ec2-user pm2 status
 sudo -u ec2-user pm2 logs transcribe
 ```
+
+After apply the box will:
+- git clone the source
+- `uv pip install -e .` (in venv)
+- Run the FastAPI app under **pm2**
+- nginx on 80 proxies to it
 
 ## Variables (important)
 

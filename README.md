@@ -50,7 +50,12 @@ Runs in the **foreground** (Ctrl+C to stop). Opens http://127.0.0.1:8082
 
 Full instructions + one-liner option: [docs/INSTALL.md](docs/INSTALL.md)
 
-**For server deployment** see the `infra/` folder (Terraform + EC2 + pm2 + git clone).
+**For server deployment** (free-tier EC2 + git clone + uv + pm2):
+see `infra/README.md`
+
+**Important security:**
+- Never commit `terraform.tfvars` or `*.tfstate` (already gitignored)
+- The Python package on PyPI only contains the `app/` code (infra/ and secrets are excluded via MANIFEST.in + pyproject.toml)
 
 ## CLI
 
