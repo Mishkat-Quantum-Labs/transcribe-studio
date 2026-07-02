@@ -18,6 +18,16 @@ This is a classic "old school" deploy — no fancy pipx on the server.
 
 ## Deploy
 
+If you hit provider checksum / cache errors (common on Windows or after previous runs):
+
+```powershell
+cd infra
+Remove-Item -Recurse -Force .terraform -ErrorAction SilentlyContinue
+Remove-Item -Force .terraform.lock.hcl -ErrorAction SilentlyContinue
+```
+
+Then:
+
 ```bash
 cd infra
 cp terraform.tfvars.example terraform.tfvars   # at minimum set ssh_cidr if you want SSH
