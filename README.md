@@ -1,6 +1,7 @@
 # Transcribe Studio
 
 [![CI](https://github.com/Mishkat-Quantum-Labs/transcribe-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Mishkat-Quantum-Labs/transcribe-studio/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/transcribe-studio)](https://pypi.org/project/transcribe-studio/)
 
 A local, browser-based tool for classroom audio transcription. Organize work by **project**, split audio into timed chunks, label speakers in free text, and evaluate human transcripts against LLM output (WER + semantic WER).
 
@@ -9,82 +10,104 @@ Built for researchers and annotators who need millisecond timestamps and exporta
 ## Features
 
 - **Projects** — group recordings by class, session, or study
-- **Waveform editor** — divide audio into chunks (by duration or count), overlap speakers at the same timestamp
-- **Chunk playback** — play one chunk at a time with **speed up/down** (0.25×–2×, keys `,` / `.`)
+- **Waveform editor** — divide audio into chunks, overlap speakers at the same timestamp
+- **Chunk playback** — speed up/down (0.25×–2×)
 - **Exports** — TXT, Markdown, JSON, CSV, SRT, WebVTT
-- **LLM evaluation** — paste or upload hypothesis transcripts; strict + semantic WER
-- **Pluggable formats** — timestamp/speaker lines, JSON segments, plain text (TOML-driven)
+- **LLM evaluation** — WER + semantic WER vs uploaded transcripts
+- **Supabase** — connect your own project; tables auto-created from **Settings**
 
-## Quick start
+## Setup
 
-### With uv (recommended)
+Install once (Python 3.11+ required):
 
-```bash
-git clone https://github.com/Mishkat-Quantum-Labs/transcribe-studio.git
-cd transcribe-studio
-uv venv
-uv pip install -e ".[dev]"
-uv run transcribe-studio
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/Mishkat-Quantum-Labs/transcribe-studio/main/scripts/build.ps1 | iex
 ```
 
-Open **http://127.0.0.1:8082**
-
-### With pip
+**Linux / macOS:**
 
 ```bash
-pip install transcribe-studio
-transcribe-studio
+curl -fsSL https://raw.githubusercontent.com/Mishkat-Quantum-Labs/transcribe-studio/main/scripts/build.sh | bash
 ```
+
+Open a **new** terminal, then:
+
+```powershell
+transcribe
+```
+
+Runs in the **foreground** — terminal stays open until **Ctrl+C**. Opens **http://127.0.0.1:8082**
+
+Full install guide: **[docs/INSTALL.md](docs/INSTALL.md)**
+
+### Manual install
+
+```bash
+pipx install transcribe-studio
+transcribe
+```
+
+## CLI
+
+| Command | Description |
+|---------|-------------|
+| `transcribe` | Start web UI (foreground) |
+| `transcribe stop` | Free the port |
+| `transcribe status` | Check if running |
+| `transcribe -p 8083` | Use another port |
+| `transcribe --force` | Replace stuck instance |
+
+Aliases: `ts`, `transcribe-studio`
+
+```bash
+transcribe -h    # full help
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TRANSCRIBE_STUDIO_HOST` | `127.0.0.1` | Bind address |
+| `TRANSCRIBE_STUDIO_PORT` | `8082` | Listen port |
+| `TRANSCRIBE_STUDIO_DATA` | `~/.transcribe-studio` | Database & audio |
 
 ## Usage
 
 1. Create a **project** from the dashboard
-2. **Upload** an MP3/WAV/M4A/OGG/FLAC recording
-3. **Divide** the wave into chunks, then transcribe each segment
-4. Use **Evaluation** to compare your transcript against an LLM upload
+2. **Upload** audio (MP3, WAV, M4A, OGG, FLAC)
+3. **Divide** into chunks and transcribe
+4. **Evaluation** — compare against LLM transcript
 5. **Export** when done
+6. **Settings** — optional Supabase backup (URL + anon key + database URL)
 
-Data is stored under `~/.transcribe-studio/` (override with `TRANSCRIBE_STUDIO_DATA`).
-
-## Development
+## Develop from source
 
 ```bash
-uv pip install -e ".[dev]"
-uv run pytest
+git clone https://github.com/Mishkat-Quantum-Labs/transcribe-studio.git
+cd transcribe-studio
+python -m venv .venv && .venv\Scripts\activate   # Windows
+pip install -e ".[dev]"
+transcribe
+pytest
 ```
 
-## Publishing
+Without installing: `python -m app`
 
-### PyPI via uv (recommended)
+## Deploy on AWS (free tier)
 
 ```bash
-uv build
-uv publish   # uses UV_PUBLISH_TOKEN or prompts for PyPI credentials
+cd infra && cp terraform.tfvars.example terraform.tfvars
+terraform init && terraform apply
 ```
 
-### PyPI via pip/twine
+Nginx on port **80** → app on **8082**. See [infra/README.md](infra/README.md).
+
+## Publish to PyPI (maintainers)
 
 ```bash
-pip install build twine
 python -m build
-twine upload dist/*
+TWINE_USERNAME=__token__ TWINE_PASSWORD=pypi-xxx python -m twine upload dist/*
 ```
-
-### GitHub release
-
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-gh release create v0.2.0 dist/*
-```
-
-## Configuration
-
-Evaluation and transcript import settings ship inside the package:
-
-- `app/config/evaluation.toml`
-- `app/config/transcript_formats.toml`
-- `app/config/languages/en.toml`
 
 ## License
 
@@ -92,4 +115,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 
-Issues and PRs welcome at [github.com/Mishkat-Quantum-Labs/transcribe-studio](https://github.com/Mishkat-Quantum-Labs/transcribe-studio).
+[github.com/Mishkat-Quantum-Labs/transcribe-studio](https://github.com/Mishkat-Quantum-Labs/transcribe-studio)

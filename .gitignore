@@ -12,9 +12,23 @@ wheels/
 # App data (local dev)
 data/
 
-# Publishing
-dist/
-*.egg-info/
-
 # Cursor terminals
 terminals/
+
+# Terraform — never commit state, secrets, or local overrides
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfstate.backup
+infra/terraform.tfvars
+infra/*.auto.tfvars
+infra/override.tf
+infra/override.tf.json
+infra/*_override.tf
+infra/*_override.tf.json
+infra/crash.log
+infra/crash.*.log
+infra/*.pem
+infra/*.pub
+infra/.terraform.tfstate.lock.info

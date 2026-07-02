@@ -124,3 +124,19 @@ def migrate_add_projects() -> None:
     )
     conn.commit()
     conn.close()
+
+
+def migrate_app_settings() -> None:
+    """Settings table for Supabase and other integrations."""
+    conn = get_conn()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL DEFAULT '',
+            updated_at TEXT DEFAULT (datetime('now'))
+        )
+        """
+    )
+    conn.commit()
+    conn.close()

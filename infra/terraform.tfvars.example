@@ -1,0 +1,8 @@
+aws_region    = "us-east-1"
+instance_type = "t2.micro"
+app_port      = 8082
+listener_port = 80
+
+# Optional SSH (your IP only)
+# key_name = "my-keypair"
+# ssh_cidr = "203.0.113.10/32"

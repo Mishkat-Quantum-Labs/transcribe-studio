@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transcribe-studio"
-version = "0.2.0"
+version = "0.2.6"
 description = "Local classroom audio transcription with projects, WER evaluation, and pluggable transcript formats"
 readme = "README.md"
 license = "MIT"
@@ -27,13 +27,16 @@ dependencies = [
     "jinja2>=3.1.0",
     "python-multipart>=0.0.12",
     "aiofiles>=24.1.0",
+    "psycopg[binary]>=3.2.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "build>=1.0", "twine>=5.0"]
 
 [project.scripts]
-transcribe-studio = "app.main:run"
+transcribe = "app.cli:main"
+transcribe-studio = "app.cli:main"
+ts = "app.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Mishkat-Quantum-Labs/transcribe-studio"

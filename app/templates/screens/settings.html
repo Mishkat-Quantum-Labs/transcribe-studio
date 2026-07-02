@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Settings — Transcribe Studio{% endblock %}
+
+{% block page_header %}
+<h1 class="page-title">Settings</h1>
+<p class="page-subtitle">Connect your own Supabase project for cloud backup and future sync</p>
+{% endblock %}
+
+{% block content %}
+<section class="card form-card">
+  <h2>Supabase</h2>
+  <p class="field-hint" style="margin-bottom:16px">
+    Paste credentials from your
+    <a href="https://supabase.com/dashboard" target="_blank" rel="noopener">Supabase dashboard</a>
+    → Project Settings → API. Stored locally on this server.
+  </p>
+
+  <form id="supabase-form" class="stack-form">
+    <label class="field">
+      <span>Project URL</span>
+      <input type="url" name="supabase_url" id="supabase_url"
+             value="{{ supabase.supabase_url }}"
+             placeholder="https://xxxx.supabase.co">
+    </label>
+    <label class="field">
+      <span>Anon (public) key</span>
+      <input type="password" name="supabase_anon_key" id="supabase_anon_key"
+             placeholder="{% if supabase.supabase_anon_key_set %}•••••••• (saved — leave blank to keep){% else %}Paste anon key from dashboard{% endif %}"
+             autocomplete="off">
+      {% if supabase.supabase_anon_key_set %}
+      <span class="field-hint">Anon key saved locally — never shown again after save</span>
+      {% endif %}
+    </label>
+    <label class="field">
+      <span>Database URL</span>
+      <input type="password" name="supabase_db_url" id="supabase_db_url"
+             placeholder="postgresql://postgres:…@db.xxxx.supabase.co:5432/postgres"
+             autocomplete="off">
+      <span class="field-hint">
+        Project Settings → Database → Connection string (URI).
+        Required to auto-create <code>projects</code>, <code>recordings</code>, and <code>segments</code> tables.
+      </span>
+    </label>
+
+    <div class="form-actions">
+      <button type="button" id="btn-test-supabase" class="btn btn-ghost">Test connection</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+    <p id="settings-status" class="status-msg" hidden></p>
+  </form>
+</section>
+
+{% if supabase.configured %}
+<div class="hint-card">
+  <strong>Status</strong>
+  <p>Supabase configured for <code>{{ supabase.supabase_url }}</code></p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const form = document.getElementById('supabase-form');
+const status = document.getElementById('settings-status');
+
+function bodyFromForm() {
+  return {
+    supabase_url: form.supabase_url.value.trim(),
+    supabase_anon_key: form.supabase_anon_key.value.trim(),
+    supabase_db_url: form.supabase_db_url.value.trim(),
+  };
+}
+
+function apiErrorMessage(data, fallback) {
+  const d = data?.detail;
+  if (typeof d === 'string') return d;
+  if (Array.isArray(d)) return d.map((x) => x.msg || String(x)).join('; ');
+  return fallback;
+}
+
+function showStatus(msg, isError) {
+  status.hidden = false;
+  status.textContent = msg;
+  status.className = isError ? 'status-msg error' : 'status-msg';
+}
+
+document.getElementById('btn-test-supabase').addEventListener('click', async () => {
+  showStatus('Testing…', false);
+  try {
+    const res = await fetch('/api/settings/supabase/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyFromForm()),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(apiErrorMessage(data, 'Test failed'));
+    showStatus(data.message || 'Connected — tables ready', false);
+  } catch (e) {
+    showStatus(e.message, true);
+  }
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showStatus('Saving…', false);
+  try {
+    const res = await fetch('/api/settings/supabase', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyFromForm()),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(apiErrorMessage(data, 'Save failed'));
+    const setup = data.supabase_setup;
+    const msg = setup?.created
+      ? 'Saved — Supabase tables created'
+      : setup?.ok
+        ? 'Saved — Supabase tables ready'
+        : 'Saved';
+    showStatus(msg, false);
+    setTimeout(() => window.location.reload(), 600);
+  } catch (e) {
+    showStatus(e.message, true);
+  }
+});
+</script>
+{% endblock %}

@@ -17,7 +17,15 @@ from app.database import (
     migrate_add_llm_transcript,
     migrate_add_projects,
     migrate_add_recording_llm_fields,
+    migrate_app_settings,
 )
+from app.services.settings import (
+    get_supabase_settings,
+    save_supabase_settings,
+    supabase_public_view,
+)
+from app.services.secrets import redact_secrets
+from app.services.supabase_schema import setup_supabase
 from app.paths import STATIC_DIR
 from app.web.deps import get_recording_or_404, recording_segments
 from app.web.routes import register_page_routes
@@ -76,6 +84,102 @@ def startup() -> None:
     migrate_add_llm_transcript()
     migrate_add_recording_llm_fields()
     migrate_add_projects()
+    migrate_app_settings()
+    _ensure_supabase_on_startup()
+
+
+class SupabaseSettingsIn(BaseModel):
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+    supabase_db_url: str = ""
+
+
+@app.get("/api/settings/supabase")
+def api_get_supabase_settings():
+    conn = get_conn()
+    raw = get_supabase_settings(conn)
+    conn.close()
+    return supabase_public_view(raw)
+
+
+def _ensure_supabase_on_startup() -> None:
+    conn = get_conn()
+    raw = get_supabase_settings(conn)
+    conn.close()
+    view = supabase_public_view(raw)
+    if not view["configured"] or not raw.get("supabase_db_url", "").strip():
+        return
+    result = setup_supabase(
+        raw["supabase_url"],
+        raw["supabase_anon_key"],
+        raw["supabase_db_url"],
+    )
+    if result.get("ok") and result.get("created"):
+        print(f"Supabase: {result.get('message', 'tables ready')}")
+
+
+@app.patch("/api/settings/supabase")
+def api_save_supabase_settings(body: SupabaseSettingsIn):
+    conn = get_conn()
+    existing = get_supabase_settings(conn)
+    url, anon_key, db_url = _merge_supabase_input(body, existing)
+    try:
+        save_supabase_settings(
+            conn,
+            url=url,
+            anon_key=anon_key,
+            db_url=db_url,
+        )
+    except ValueError as exc:
+        conn.close()
+        raise HTTPException(400, str(exc)) from exc
+    raw = get_supabase_settings(conn)
+    conn.close()
+    view = supabase_public_view(raw)
+    payload: dict[str, Any] = {"ok": True, **view}
+    if view["configured"]:
+        setup = setup_supabase(url, anon_key, db_url)
+        payload["supabase_setup"] = {
+            "ok": setup.get("ok"),
+            "message": redact_secrets(setup.get("message", "")),
+            "created": setup.get("created", False),
+            "tables": setup.get("tables", []),
+        }
+        if not setup.get("ok"):
+            raise HTTPException(
+                400,
+                redact_secrets(setup.get("message", "Supabase setup failed")),
+            )
+    return payload
+
+
+def _merge_supabase_input(
+    body: SupabaseSettingsIn, existing: dict[str, str]
+) -> tuple[str, str, str]:
+    """Use saved values when the client omits secrets (masked password fields)."""
+    url = body.supabase_url.strip() or existing["supabase_url"]
+    anon_key = body.supabase_anon_key.strip() or existing["supabase_anon_key"]
+    db_url = (
+        body.supabase_db_url.strip()
+        if body.supabase_db_url.strip()
+        else existing["supabase_db_url"]
+    )
+    return url, anon_key, db_url
+
+
+@app.post("/api/settings/supabase/test")
+def api_test_supabase(body: SupabaseSettingsIn):
+    conn = get_conn()
+    existing = get_supabase_settings(conn)
+    conn.close()
+    url, anon_key, db_url = _merge_supabase_input(body, existing)
+    result = setup_supabase(url, anon_key, db_url)
+    if not result.get("ok"):
+        raise HTTPException(
+            400,
+            redact_secrets(result.get("message", "Connection failed")),
+        )
+    return result
 
 
 @app.post("/api/recordings")
@@ -458,8 +562,19 @@ def delete_recording(recording_id: int):
     return {"ok": True}
 
 
+def serve(host: str = "127.0.0.1", port: int = 8082) -> None:
+    try:
+        uvicorn.run("app.main:app", host=host, port=port, reload=False)
+    finally:
+        from app.process import clear_pid_file
+
+        clear_pid_file()
+
+
 def run() -> None:
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8082, reload=False)
+    from app.cli import main
+
+    main()
 
 
 # ============================================================
