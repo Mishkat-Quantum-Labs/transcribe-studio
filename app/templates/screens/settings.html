@@ -3,10 +3,12 @@
 
 {% block page_header %}
 <h1 class="page-title">Settings</h1>
-<p class="page-subtitle">Connect your own Supabase project for cloud backup and future sync</p>
+<p class="page-subtitle">Manage Supabase cloud database and S3 storage integrations</p>
 {% endblock %}
 
 {% block content %}
+
+{# ============ SUPABASE SECTION ============ #}
 <section class="card form-card">
   <h2>Supabase</h2>
   <p class="field-hint" style="margin-bottom:16px">
@@ -52,10 +54,80 @@
 
 {% if supabase.configured %}
 <div class="hint-card">
-  <strong>Status</strong>
-  <p>Supabase configured for <code>{{ supabase.supabase_url }}</code></p>
+  <strong>Supabase Status</strong>
+  <p>Connected to <code>{{ supabase.supabase_url }}</code></p>
 </div>
 {% endif %}
+
+{# ============ S3 SECTION ============ #}
+<section class="card form-card" style="margin-top:32px">
+  <h2>S3 Storage</h2>
+  <p class="field-hint" style="margin-bottom:16px">
+    Audio files and LLM transcripts are stored in AWS S3 when configured.
+    S3 is set via <strong>environment variables</strong> (not this UI).
+  </p>
+
+  {% if s3.configured %}
+  <div class="hint-card {% if s3.ok %}hint-card--success{% else %}hint-card--error{% endif %}">
+    <strong>{% if s3.ok %}✓ Connected{% else %}✗ Error{% endif %}</strong>
+    <p>{{ s3.message }}</p>
+    {% if s3.bucket %}
+    <p>Bucket: <code>{{ s3.bucket }}</code> — Region: <code>{{ s3.region }}</code></p>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="hint-card">
+    <strong>Not configured</strong>
+    <p>Set the following environment variables on your server (or in <code>.env</code>):</p>
+    <pre style="background:#1a1a2e;padding:12px;border-radius:6px;overflow-x:auto;font-size:13px;margin-top:8px"><code>S3_BUCKET=your-bucket-name
+S3_PREFIX=transcribe-studio
+AWS_REGION=us-east-1
+
+# If NOT running on EC2 with an IAM role:
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...</code></pre>
+    <p class="field-hint" style="margin-top:12px">
+      On EC2 deployed via Terraform, the IAM role handles auth automatically — no keys needed.
+      Just set <code>s3_bucket_name</code> in your <code>terraform.tfvars</code>.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="form-actions" style="margin-top:16px">
+    <button type="button" id="btn-test-s3" class="btn btn-ghost">Test S3 connection</button>
+  </div>
+  <p id="s3-status" class="status-msg" hidden></p>
+</section>
+
+{# ============ ENVIRONMENT INFO ============ #}
+<section class="card form-card" style="margin-top:32px">
+  <h2>Environment Configuration</h2>
+  <p class="field-hint" style="margin-bottom:16px">
+    For server deployments (EC2), set these in your <code>terraform.tfvars</code> or as environment variables.
+    For local development, create a <code>.env</code> file in the project root.
+  </p>
+
+  <details>
+    <summary style="cursor:pointer;font-weight:500;margin-bottom:8px">All environment variables</summary>
+    <pre style="background:#1a1a2e;padding:12px;border-radius:6px;overflow-x:auto;font-size:13px"><code># App
+TRANSCRIBE_STUDIO_HOST=0.0.0.0
+TRANSCRIBE_STUDIO_PORT=8082
+TRANSCRIBE_STUDIO_DATA=/var/lib/transcribe-studio
+
+# Supabase (alternative to UI settings above)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+SUPABASE_DB_URL=postgresql://...
+
+# S3
+S3_BUCKET=your-bucket-name
+S3_PREFIX=transcribe-studio
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIA...       # not needed on EC2 with IAM role
+AWS_SECRET_ACCESS_KEY=...        # not needed on EC2 with IAM role</code></pre>
+  </details>
+</section>
+
 {% endblock %}
 
 {% block scripts %}
@@ -121,6 +193,23 @@ form.addEventListener('submit', async (e) => {
     setTimeout(() => window.location.reload(), 600);
   } catch (e) {
     showStatus(e.message, true);
+  }
+});
+
+// S3 test button
+const s3Status = document.getElementById('s3-status');
+document.getElementById('btn-test-s3').addEventListener('click', async () => {
+  s3Status.hidden = false;
+  s3Status.textContent = 'Testing…';
+  s3Status.className = 'status-msg';
+  try {
+    const res = await fetch('/api/settings/s3/test', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    s3Status.textContent = data.message || (data.ok ? 'Connected' : 'Failed');
+    s3Status.className = data.ok ? 'status-msg' : 'status-msg error';
+  } catch (e) {
+    s3Status.textContent = e.message;
+    s3Status.className = 'status-msg error';
   }
 });
 </script>

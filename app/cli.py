@@ -7,6 +7,34 @@ import app._bootstrap  # noqa: F401 — Windows console fix (must be first)
 import argparse
 import os
 import sys
+from pathlib import Path
+
+
+def _load_dotenv() -> None:
+    """Load .env file from project root or cwd if present (no dependency needed)."""
+    # Check common locations for .env
+    candidates = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parent.parent / ".env",
+    ]
+    for env_file in candidates:
+        if env_file.is_file():
+            with env_file.open() as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, value = line.partition("=")
+                    key = key.strip()
+                    value = value.strip().strip("'\"")
+                    # Don't override existing env vars
+                    if key and key not in os.environ:
+                        os.environ[key] = value
+            break
+
+
+# Load .env before anything else reads environment variables
+_load_dotenv()
 
 HELP_EPILOG = """
 examples:

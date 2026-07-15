@@ -9,3 +9,15 @@ git_branch = "main"
 # Optional SSH (your IP only recommended)
 # key_name = "your-key"
 # ssh_cidr = "YOUR.IP.HERE/32"
+
+# --- Supabase (cloud database) ---
+# Get these from your Supabase project dashboard: Settings → API
+# supabase_url      = "https://your-project-id.supabase.co"
+# supabase_anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+# supabase_db_url   = "postgresql://postgres.your-project-id:your-password@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+
+# --- S3 Storage (audio files & transcripts) ---
+# Set a bucket name to enable S3 storage (bucket will be created by Terraform)
+# EC2 gets an IAM role with access — no API keys needed on the instance
+# s3_bucket_name = "my-transcribe-studio-bucket"
+# s3_prefix      = "transcribe-studio"
