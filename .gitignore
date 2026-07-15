@@ -41,6 +41,7 @@ infra/.terraform.tfstate.lock.info
 # Secrets / credentials (never leak)
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 id_rsa*

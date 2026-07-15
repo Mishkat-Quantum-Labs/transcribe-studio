@@ -17,3 +17,13 @@ output "ami_id" {
   description = "Amazon Linux 2 AMI used"
   value       = data.aws_ami.amazon_linux_2.id
 }
+
+output "s3_bucket" {
+  description = "S3 bucket for storage (empty if not configured)"
+  value       = var.s3_bucket_name != "" ? aws_s3_bucket.storage[0].bucket : ""
+}
+
+output "iam_role" {
+  description = "IAM role attached to EC2 instance"
+  value       = aws_iam_role.app.name
+}

@@ -58,3 +58,38 @@ variable "project_name" {
   type        = string
   default     = "transcribe-studio"
 }
+
+# --- Supabase (passed to app via env vars) ---
+variable "supabase_url" {
+  description = "Supabase project URL (e.g. https://xxx.supabase.co)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "supabase_anon_key" {
+  description = "Supabase anon/public key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "supabase_db_url" {
+  description = "Supabase direct database connection URL"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# --- S3 ---
+variable "s3_bucket_name" {
+  description = "S3 bucket for audio and transcript storage (created if set)"
+  type        = string
+  default     = ""
+}
+
+variable "s3_prefix" {
+  description = "Object key prefix inside the bucket"
+  type        = string
+  default     = "transcribe-studio"
+}

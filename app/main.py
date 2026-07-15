@@ -1,3 +1,4 @@
+import os
 import shutil
 import uuid
 from pathlib import Path
@@ -5,7 +6,7 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -26,6 +27,7 @@ from app.services.settings import (
 )
 from app.services.secrets import redact_secrets
 from app.services.supabase_schema import setup_supabase
+from app.services import s3 as s3_service
 from app.paths import STATIC_DIR
 from app.web.deps import get_recording_or_404, recording_segments
 from app.web.routes import register_page_routes
@@ -85,7 +87,30 @@ def startup() -> None:
     migrate_add_recording_llm_fields()
     migrate_add_projects()
     migrate_app_settings()
+    _load_env_settings()
     _ensure_supabase_on_startup()
+
+
+def _load_env_settings() -> None:
+    """Seed Supabase settings from environment variables (useful on EC2)."""
+    env_url = os.environ.get("SUPABASE_URL", "").strip()
+    env_anon = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+    env_db = os.environ.get("SUPABASE_DB_URL", "").strip()
+    if not env_url or not env_anon:
+        return
+    conn = get_conn()
+    existing = get_supabase_settings(conn)
+    # Only seed if not already configured via the UI
+    if existing.get("supabase_url"):
+        conn.close()
+        return
+    try:
+        save_supabase_settings(conn, url=env_url, anon_key=env_anon, db_url=env_db)
+        print(f"Supabase: loaded settings from environment variables")
+    except ValueError as exc:
+        print(f"Supabase env config error: {exc}")
+    finally:
+        conn.close()
 
 
 class SupabaseSettingsIn(BaseModel):
@@ -199,6 +224,12 @@ async def upload_recording(
     with dest.open("wb") as out:
         shutil.copyfileobj(file.file, out)
 
+    # Upload to S3 if configured (keep local copy as cache)
+    if s3_service.is_s3_configured():
+        s3_result = s3_service.upload_file(dest, "audio", stored)
+        if not s3_result.get("ok"):
+            print(f"S3 upload warning: {s3_result.get('message')}")
+
     conn = get_conn()
     if project_id is None:
         default = conn.execute(
@@ -279,10 +310,24 @@ def stream_audio(recording_id: int):
     conn.close()
     if not rec:
         raise HTTPException(404, "Recording not found")
+
     path = AUDIO_DIR / rec["filename"]
-    if not path.exists():
-        raise HTTPException(404, "Audio file missing")
-    return FileResponse(path)
+
+    # If local file exists, serve it directly
+    if path.exists():
+        return FileResponse(path)
+
+    # Try S3: generate presigned URL and redirect
+    if s3_service.is_s3_configured():
+        result = s3_service.generate_presigned_url("audio", rec["filename"])
+        if result.get("ok"):
+            return RedirectResponse(result["url"], status_code=302)
+        # Try downloading from S3 to local cache
+        dl = s3_service.download_file("audio", rec["filename"], path)
+        if dl.get("ok"):
+            return FileResponse(path)
+
+    raise HTTPException(404, "Audio file missing")
 
 
 @app.post("/api/recordings/{recording_id}/segments/overlap")
@@ -556,9 +601,13 @@ def delete_recording(recording_id: int):
     conn.execute("DELETE FROM recordings WHERE id = ?", (recording_id,))
     conn.commit()
     conn.close()
+    # Delete local file
     path = AUDIO_DIR / rec["filename"]
     if path.exists():
         path.unlink()
+    # Delete from S3
+    if s3_service.is_s3_configured():
+        s3_service.delete_file("audio", rec["filename"])
     return {"ok": True}
 
 
@@ -768,6 +817,12 @@ async def upload_llm_transcript(
     stored_path = LLM_TRANSCRIPT_DIR / stored_filename
     stored_path.write_text(text_content, encoding="utf-8")
 
+    # Upload to S3 if configured
+    if s3_service.is_s3_configured():
+        s3_result = s3_service.upload_file(stored_path, "llm_transcripts", stored_filename)
+        if not s3_result.get("ok"):
+            print(f"S3 transcript upload warning: {s3_result.get('message')}")
+
     conn = get_conn()
     try:
         return _ingest_llm_transcript(
@@ -781,6 +836,8 @@ async def upload_llm_transcript(
         )
     except HTTPException:
         stored_path.unlink(missing_ok=True)
+        if s3_service.is_s3_configured():
+            s3_service.delete_file("llm_transcripts", stored_filename)
         raise
     finally:
         conn.close()
@@ -949,6 +1006,9 @@ def delete_llm_transcript(recording_id: int):
         path = LLM_TRANSCRIPT_DIR / rec["llm_transcript_file"]
         if path.exists():
             path.unlink()
+        # Delete from S3
+        if s3_service.is_s3_configured():
+            s3_service.delete_file("llm_transcripts", rec["llm_transcript_file"])
 
     # Clear from database
     conn.execute(
@@ -963,6 +1023,57 @@ def delete_llm_transcript(recording_id: int):
     conn.close()
 
     return {"ok": True}
+
+
+# ============================================================
+# S3 & Infrastructure Status Endpoints
+# ============================================================
+
+
+@app.get("/api/settings/s3")
+def api_get_s3_status():
+    """Check S3 configuration and connection status."""
+    if not s3_service.is_s3_configured():
+        return {
+            "configured": False,
+            "message": "S3_BUCKET environment variable not set",
+        }
+    result = s3_service.check_connection()
+    return {
+        "configured": True,
+        **result,
+    }
+
+
+@app.post("/api/settings/s3/test")
+def api_test_s3():
+    """Test S3 connectivity."""
+    return s3_service.check_connection()
+
+
+@app.get("/api/settings/status")
+def api_integration_status():
+    """Overview of all integrations (Supabase + S3)."""
+    conn = get_conn()
+    raw = get_supabase_settings(conn)
+    conn.close()
+    supa_view = supabase_public_view(raw)
+
+    s3_configured = s3_service.is_s3_configured()
+    s3_status = s3_service.check_connection() if s3_configured else {"ok": False}
+
+    return {
+        "supabase": {
+            "configured": supa_view["configured"],
+            "url": supa_view.get("supabase_url", ""),
+        },
+        "s3": {
+            "configured": s3_configured,
+            "ok": s3_status.get("ok", False),
+            "bucket": s3_status.get("bucket", ""),
+            "message": s3_status.get("message", "Not configured"),
+        },
+    }
 
 
 if __name__ == "__main__":

@@ -8,6 +8,11 @@ import argparse
 import os
 import sys
 
+from dotenv import load_dotenv
+
+# Load .env before anything else reads environment variables
+load_dotenv()
+
 HELP_EPILOG = """
 examples:
   transcribe                           Start on 127.0.0.1:8082 (foreground)

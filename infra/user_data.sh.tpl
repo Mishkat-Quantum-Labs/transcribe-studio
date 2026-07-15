@@ -8,6 +8,14 @@ GIT_BRANCH="${git_branch}"
 APP_PORT="${app_port}"
 LISTENER_PORT="${listener_port}"
 
+# --- Integration env vars ---
+SUPABASE_URL="${supabase_url}"
+SUPABASE_ANON_KEY="${supabase_anon_key}"
+SUPABASE_DB_URL="${supabase_db_url}"
+S3_BUCKET="${s3_bucket}"
+S3_PREFIX="${s3_prefix}"
+AWS_REGION="${aws_region}"
+
 echo "==> Updating system and installing base tools"
 yum update -y
 yum install -y git python3 python3-pip nginx curl tar
@@ -56,7 +64,13 @@ module.exports = {
     env: {
       TRANSCRIBE_STUDIO_DATA: "/var/lib/transcribe-studio",
       TRANSCRIBE_STUDIO_HOST: "0.0.0.0",
-      TRANSCRIBE_STUDIO_PORT: "${app_port}"
+      TRANSCRIBE_STUDIO_PORT: "${app_port}",
+      SUPABASE_URL: "${supabase_url}",
+      SUPABASE_ANON_KEY: "${supabase_anon_key}",
+      SUPABASE_DB_URL: "${supabase_db_url}",
+      S3_BUCKET: "${s3_bucket}",
+      S3_PREFIX: "${s3_prefix}",
+      AWS_REGION: "${aws_region}"
     },
     instances: 1,
     exec_mode: "fork",
